@@ -1,0 +1,21 @@
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
+	xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+  <table class="pane" id="${attrs.id}">
+    <tr><td class="pane-header" colspan="3">${it.scriptName}</td></tr>
+    
+   	<f:entry title="Work Item">
+		${it.workItemId}
+	</f:entry>
+   	<f:entry title="Parameters">
+		${it.parameters}
+	</f:entry>
+   	<f:entry title="Result">
+		${it.result}
+		<j:if test="${it.hasFailed()}">
+			(<a href="${rootURL}/${it.url}/run">Restart</a>)
+		</j:if>
+	</f:entry>
+
+  </table>
+
+</j:jelly>

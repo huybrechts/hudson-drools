@@ -1,0 +1,38 @@
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
+	xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+	<j:if test="${it.canRead()}">
+	<table class="pane" id="${attrs.id}">
+		<tr>
+			<td class="pane-header" colspan="3">${it.displayName}
+				${it.actor!=null?("(assigned to "+it.actor.fullName+")"):""}
+				${it.completed?"(Completed)":""}${it.canceled?"(Canceled)":""}</td>
+		</tr>
+
+		<j:choose>
+			<j:when test="${it.completed}">
+				<j:forEach var="parameterValue" items="${it.answers}">
+					<st:include it="${parameterValue}" page="value.jelly" />
+				</j:forEach>
+			</j:when>
+			<j:otherwise>
+				<tr>
+					<td>
+						<f:form method="post" action="humanTask/${it.workItemId}/submit">
+							<j:forEach var="parameterDefinition" items="${it.parameterDefinitions}">
+								<st:include it="${parameterDefinition}"
+									page="${parameterDefinition.descriptor.valuePage}" />
+							</j:forEach>
+							<j:if test="${it.canComplete() &amp;&amp; !it.run.completed &amp;&amp; !it.run.aborted}">
+								<f:block>
+									<f:submit value="Submit" />
+								</f:block>
+							</j:if>
+						</f:form>
+					</td>
+				</tr>
+			</j:otherwise>
+		</j:choose>
+
+	</table>
+	</j:if>
+</j:jelly>

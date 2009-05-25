@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.core.resources.IFile"
+            id="hudson.drools.eclipse.contribution1" nameFilter="*.rf">
+         <menu
+               label="Hudson"
+               path="additions"
+               id="hudson.drools.eclipse.menu1">
+            <separator
+                  name="group1">
+            </separator>
+         </menu>
+         <action
+               label="Deploy Workflow..."
+               class="hudson.drools.eclipse.DeployAction"
+               menubarPath="hudson.drools.eclipse.menu1/group1"
+               enablesFor="1"
+               id="hudson.drools.eclipse.deployAction">
+         </action>
+         <action
+               label="Create Project..."
+               class="hudson.drools.eclipse.CreateProjectAction"
+               menubarPath="hudson.drools.eclipse.menu1/group1"
+               enablesFor="1"
+               id="hudson.drools.eclipse.createProjectAction">
+         </action>
+      </objectContribution>
+   </extension>
+
+</plugin>

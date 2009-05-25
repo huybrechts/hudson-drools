@@ -1,0 +1,77 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
+	xmlns:i="jelly:fmt">
+	<l:layout title="${it.project.displayName} #${it.number}">
+		<st:include page="sidepanel.jelly" />
+		<l:main-panel>
+
+			<H1>
+				<img src="buildStatus" width="48" height="48"
+					alt="${it.iconColor.description}" tooltip="${it.iconColor.description}" />
+				${%Build} #${it.number}
+				(
+				<i:formatDate value="${it.timestamp.time}" type="both"
+					dateStyle="medium" timeStyle="medium" />
+				)
+			</H1>
+
+			<div>
+				<t:editableDescription permission="${it.UPDATE}" />
+			</div>
+
+      <table style="margin-top: 1em; margin-left:1em;">
+	        <!-- give actions a chance to contribute summary item -->
+	        <j:forEach var="a" items="${it.actions}">
+	          <st:include page="summary.jelly" from="${a}" optional="true" it="${a}" />
+	        </j:forEach>
+	        </table>
+
+			<j:if test="${!it.humanTasks.isEmpty()}">
+				<h3>Human Tasks</h3>
+				<j:forEach var="task" items="${it.humanTasks}">
+					<st:include it="${task}" page="index.jelly" />
+				</j:forEach>
+			</j:if>
+
+			<j:if test="${!it.scriptExecutions.isEmpty()}">
+				<h3>Scripts</h3>
+				<j:forEach var="execution" items="${it.scriptExecutions}">
+					<st:include it="${execution}" page="index.jelly" />
+				</j:forEach>
+			</j:if>
+
+			<MAP NAME="map">
+				<j:forEach var="node" items="${it.ruleFlowRenderer.nodes}">
+					<j:if test="${node.url != null}">
+						<area shape="rect"
+							coords="${node.x},${node.y},${node.x+node.width},${node.y+node.height}"
+							href="${rootURL}/${node.url}" alt="${node.name}" title="${node.name}" />
+					</j:if>
+				</j:forEach>
+			</MAP>
+			<img src="processInstanceImage" usemap="#map" />
+
+			<h3>Logs</h3>
+			<j:set var="logs" value="${it.logs}" />
+			<table class="pane" id="${attrs.id}">
+				<tr>
+					<td class="pane-header">Time</td>
+					<td class="pane-header">Event</td>
+					<td class="pane-header">Process ID (Instance ID)</td>
+					<td class="pane-header">Node(Instance ID)</td>
+				</tr>
+				<j:forEach var="log" items="${logs}">
+					<tr>
+						<td>${log.date}</td>
+						<td>${ (log.type == 0) ? "Entered" : "Left" }</td>
+						<td>${log.processId} (${log.processInstanceId})
+						</td>
+						<td>${it.ruleFlowRenderer.getNodeName(log.nodeId)}
+							(${log.nodeInstanceId})</td>
+					</tr>
+				</j:forEach>
+			</table>
+
+		</l:main-panel>
+	</l:layout>
+</j:jelly>

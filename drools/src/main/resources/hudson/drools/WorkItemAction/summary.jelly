@@ -1,0 +1,26 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
+	xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project">
+
+	<t:summary icon="star.gif">
+		<j:set var="droolsRun" value="${it.droolsRun}"/>
+		<j:set var="allowRestart" value="${it.allowRestart}"/>
+		<j:set var="allowComplete" value="${it.allowComplete}"/>
+		<j:choose>
+			<j:when test="${droolsRun != null}">
+		WorkItem ${it.workItemId} in <a href="${rootURL}/${droolsRun.url}"><img src="${rootURL}/${droolsRun.url}/buildStatus" width="16" height="16"/>${it.droolsRun.fullDisplayName}</a>.
+			</j:when>
+			<j:otherwise>
+		WorkItem ${it.workItemId} (process deleted).
+			</j:otherwise>
+		</j:choose>
+		<j:if test="${allowRestart}">
+			<a href="${rootURL}/${it.url}/restart">Restart</a>
+		</j:if>
+		<j:if test="${allowComplete}">
+			or <a href="${rootURL}/${it.url}/complete">Accept</a>
+		</j:if>
+		<j:if test="${allowRestart || allowComplete}">.</j:if>
+	</t:summary>
+
+</j:jelly>

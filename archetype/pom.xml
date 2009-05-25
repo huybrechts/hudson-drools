@@ -1,0 +1,60 @@
+<project>
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>REPLACE_ME</groupId>
+	<artifactId>REPLACE_ME</artifactId>
+	<packaging>hpi</packaging>
+	<version>1.0-SNAPSHOT</version>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.jvnet.hudson.plugins</groupId>
+			<artifactId>drools</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+    <dependency>
+      <groupId>org.jvnet.hudson.main</groupId>
+      <artifactId>hudson-war</artifactId>
+      <type>war</type>
+      <version>1.304<!-- replace this with the version you want--></version>
+      <scope>test</scope>
+    </dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jvnet.hudson.tools</groupId>
+				<artifactId>maven-hpi-plugin</artifactId>
+				<extensions>true</extensions>
+				<version>1.37</version>
+				<dependencies>
+					<dependency>
+						<groupId>javax.servlet</groupId>
+						<artifactId>servlet-api</artifactId>
+						<version>2.4</version>
+					</dependency>
+					<dependency>
+						<groupId>org.eclipse.jdt</groupId>
+						<artifactId>core</artifactId>
+						<version>3.4.2.v_883_R34x</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
+
+  <repositories>
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+</project>

@@ -1,0 +1,55 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+	<l:layout permission="${app.ADMINISTER}" title="Drools Configuration">
+		<st:include it="${app}" page="sidepanel.jelly" />
+		<l:main-panel>
+			<form action="submit" method="post">
+				<table>
+
+					<f:section title="Database Connection">
+						<j:set var="dbSettings" value="${it.getDBSettingsDescriptors()}" />
+						<j:forEach var="idx" begin="0" end="${size(dbSettings)-1}">
+							<j:set var="descriptor" value="${dbSettings[idx]}" />
+							<f:radioBlock name="dbSettings" value="${idx}"
+								title="${descriptor.displayName}" checked="${it.dbSettings.descriptor==descriptor}">
+								<j:set var="instance"
+									value="${it.dbSettings.descriptor==descriptor ? it.dbSettings : null}" />
+								<st:include from="${descriptor}" it="${instance}" optional="true"
+									page="index.jelly" />
+							</f:radioBlock>
+						</j:forEach>
+					</f:section>
+
+					<f:section title="Scripts">
+						<f:entry title="Scripts">
+							<f:repeatable name="scripts" var="script" items="${it.scripts}"
+								noAddButton="true" minimum="1">
+								<table width="100%">
+									<f:entry title="ID">
+										<f:textbox name="id" value="${script.id}" />
+									</f:entry>
+									<f:entry title="Source">
+										<f:textarea name="source" value="${script.source}" />
+									</f:entry>
+									<f:entry>
+										<div align="right">
+											<input type="button" value="${%Add more scripts...}"
+												class="repeatable-add show-if-last" />
+											<input type="button" value="${%Delete}"
+												class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+										</div>
+									</f:entry>
+								</table>
+							</f:repeatable>
+						</f:entry>
+					</f:section>
+
+					<f:block>
+						<f:submit value="Save" />
+					</f:block>
+				</table>
+			</form>
+
+		</l:main-panel>
+	</l:layout>
+</j:jelly>

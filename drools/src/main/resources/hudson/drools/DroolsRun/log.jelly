@@ -1,0 +1,38 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
+	xmlns:i="jelly:fmt">
+	<l:layout title="${it.project.displayName} #${it.number}">
+		<st:include page="sidepanel.jelly" />
+		<l:main-panel>
+
+			<t:buildCaption>
+				${%Build} #${it.number}
+        (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>)
+      </t:buildCaption>
+
+	<j:set var="logs" value="${it.logs}"/>
+	
+  	<table class="pane" id="${attrs.id}">
+    	<tr>
+    		<td class="pane-header">Time</td>
+    		<td class="pane-header">Event</td>
+    		<td class="pane-header">Process ID</td>
+    		<td class="pane-header">Node ID</td>
+    		<td class="pane-header">Process Instance ID</td>
+    		<td class="pane-header">Node Instance ID</td>
+    	</tr>
+    	<j:forEach var="log" items="${logs}">
+	    		<tr>
+	    			<td>${log.date}</td>
+	    			<td>${ (log.type == 0) ? "Entered" : "Left" }</td>
+	    			<td>${log.processId}</td>
+	    			<td>${log.nodeId}</td>
+	    			<td>${log.processInstanceId}</td>
+	    			<td>${log.nodeInstanceId}</td>
+	    		</tr>
+    	</j:forEach>
+	</table>	
+
+    </l:main-panel>
+  </l:layout>
+</j:jelly>

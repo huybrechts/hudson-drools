@@ -1,0 +1,35 @@
+<!--
+  Side panel for the project view.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:x="jelly:xml" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+  <l:header title="${it.name}">
+    <st:include page="rssHeader.jelly" />
+    <link rel="alternate" title="Hudson:${it.name} (changelog)" href="rssChangelog" type="application/rss+xml" />
+    <link rel="alternate" title="Hudson:${it.name} (changelog) (RSS 2.0)" href="rssChangelog?flavor=rss20" type="application/rss+xml" />
+  </l:header>
+  <l:side-panel>
+    <l:tasks>
+      <j:set var="url" value="${h.getNearestAncestorUrl(request,it)}"/>
+      <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}" />
+        <j:if test="${!it.disabled}">
+          <l:task icon="images/24x24/clock.gif" href="${url}/build?delay=0sec" title="${%Build Now}"
+                  onclick="${h.ifThenElse(it.parameterized,null,'return build(this)')}" permission="${it.BUILD}" />
+          <script>
+            function build(a) {
+              new Ajax.Request(a.href,{method:"post"});
+              hoverNotification('${%Build scheduled}',a.parentNode);
+              return false;
+            }
+          </script>
+        </j:if>
+        <l:task icon="images/24x24/edit-delete.gif" href="${url}/delete" title="Delete Project" permission="${it.DELETE}" />
+        <l:task icon="images/24x24/setting.gif" href="${url}/configure" title="${%Configure}" permission="${it.CONFIGURE}" />
+    </l:tasks>
+
+    <st:include page="sidepanel2.jelly" optional="true" />
+
+    <j:forEach var="w" items="${it.widgets}">
+      <st:include it="${w}" page="index.jelly" />
+    </j:forEach>
+  </l:side-panel>
+</j:jelly>
