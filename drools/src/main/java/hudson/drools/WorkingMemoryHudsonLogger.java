@@ -43,7 +43,10 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
         
         if (logEvent instanceof RuleFlowLogEvent) {
         	long processInstanceId = ((RuleFlowLogEvent) logEvent).getProcessInstanceId();
-        	DroolsRun.getFromProcessInstance(processInstanceId).getLogWriter().println(logEvent);
+        	DroolsRun processInstance = DroolsRun.getFromProcessInstance(processInstanceId);
+        	if (processInstance != null) {
+        		processInstance.getLogWriter().println(logEvent);
+        	}
         }
         
     }

@@ -34,6 +34,8 @@ import org.kohsuke.stapler.StaplerResponse;
 public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		Queue.Executable {
 
+	private static final String RUN = "Run";
+
 	private static Logger logger = Logger.getLogger(DroolsRun.class.getName());
 
 	private List<HumanTask> humanTasks;
@@ -126,7 +128,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public static DroolsRun getFromProcessInstance(
 			ProcessInstance processInstance) {
 		RunWrapper wrapper = (RunWrapper) ((WorkflowProcessInstance) processInstance)
-				.getVariable("run");
+				.getVariable(RUN);
 		if (wrapper == null) {
 			return null;
 		}
@@ -143,8 +145,6 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	}
 
 	protected class RunnerImpl implements Runner {
-
-		private static final String RUN = "Run";
 
 		public void cleanUp(BuildListener listener) throws Exception {
 		}

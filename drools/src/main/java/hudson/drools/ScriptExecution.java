@@ -86,7 +86,8 @@ public class ScriptExecution {
 
 				} catch (Exception e) {
 					result = Result.FAILED;
-					e.printStackTrace();
+					run.getLogWriter().println("Exception while running script " + scriptName);
+					e.printStackTrace(run.getLogWriter());
 				} finally {
 					try {
 						run.save();

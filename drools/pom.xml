@@ -141,7 +141,7 @@
 	</dependencies>
 
 	<properties>
-		<drools.version>5.0.1</drools.version>
+		<drools.version>5.0.1.SNAPSHOT</drools.version>
 	</properties>
 
 	<repositories>

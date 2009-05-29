@@ -28,41 +28,12 @@
         </parameter>
         <parameter name="Project" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>maven-install-plugin release</value>
+          <value>Build</value>
         </parameter>
       </work>
       <mapping type="out" from="Build" to="build" />
     </workItem>
     <end id="3" name="Release Complete" x="38" y="376" width="125" height="40" />
-    <humanTask id="4" name="Manual Test" x="126" y="160" width="149" height="40" >
-      <work name="Human Task" >
-        <parameter name="ActorId" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-        </parameter>
-        <parameter name="Comment" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-        </parameter>
-        <parameter name="Content" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>task("Manual Test") {
-	result type:"boolean", description: "Test Success?", defaultValue: false
-}
-</value>
-        </parameter>
-        <parameter name="Priority" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-        </parameter>
-        <parameter name="Skippable" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>false</value>
-        </parameter>
-        <parameter name="TaskName" >
-          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>Manual Test</value>
-        </parameter>
-      </work>
-      <mapping type="out" from="result" to="manualTestResult" />
-    </humanTask>
     <workItem id="5" name="Deploy Staged Release" x="16" y="304" width="169" height="40" >
       <work name="Script" >
         <parameter name="Script" >
@@ -75,19 +46,33 @@
     <split id="6" name="Test Success ?" x="147" y="232" width="106" height="40" type="2" >
       <constraints>
         <constraint toNodeId="7" toType="DROOLS_DEFAULT" name="no" priority="1" type="code" dialect="java" >return !manualTestResult;</constraint>
-        <constraint toNodeId="5" toType="DROOLS_DEFAULT" name="yes" priority="1" type="code" dialect="java" >return manualTestResult;</constraint>
+        <constraint toNodeId="5" toType="DROOLS_DEFAULT" name="yes" priority="1" type="code" dialect="java" >return build.isSuccess();</constraint>
       </constraints>
     </split>
     <end id="7" name="Release Aborted" x="217" y="304" width="169" height="40" />
+    <workItem id="8" name="Automated Test" x="130" y="164" width="138" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>Automated Test</value>
+        </parameter>
+      </work>
+    </workItem>
   </nodes>
 
   <connections>
     <connection from="1" to="2" />
     <connection from="5" to="3" />
-    <connection from="2" to="4" />
     <connection from="6" to="5" />
-    <connection from="4" to="6" />
+    <connection from="8" to="6" />
     <connection from="6" to="7" />
+    <connection from="2" to="8" />
   </connections>
 
 </process>

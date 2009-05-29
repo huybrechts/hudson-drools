@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process xmlns="http://drools.org/drools-5.0/process"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+         xs:schemaLocation="http://drools.org/drools-5.0/process drools-processes-5.0.xsd"
+         type="RuleFlow" name="flow" id="staging2" package-name="staging2" >
+
+  <header>
+    <variables>
+      <variable name="build" >
+        <type name="org.drools.process.core.datatype.impl.type.ObjectDataType" className="hudson.drools.RunWrapper" />
+      </variable>
+      <variable name="automatedTest" >
+        <type name="org.drools.process.core.datatype.impl.type.ObjectDataType" className="hudson.drools.RunWrapper" />
+      </variable>
+      <variable name="anotherAutomatedTest" >
+        <type name="org.drools.process.core.datatype.impl.type.ObjectDataType" className="hudson.drools.RunWrapper" />
+      </variable>
+    </variables>
+  </header>
+
+  <nodes>
+    <start id="1" name="Start" x="184" y="16" width="80" height="40" />
+    <workItem id="2" name="Build" x="184" y="88" width="80" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>Build</value>
+        </parameter>
+      </work>
+      <mapping type="out" from="Build" to="build" />
+    </workItem>
+    <end id="3" name="Release Complete" x="60" y="520" width="125" height="40" />
+    <workItem id="5" name="Deploy Staged Release" x="38" y="448" width="169" height="40" >
+      <work name="Script" >
+        <parameter name="Script" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>DeployStagedRelease</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="build" to="run" />
+    </workItem>
+    <split id="6" name="Test Success ?" x="170" y="376" width="106" height="40" type="2" >
+      <constraints>
+        <constraint toNodeId="7" toType="DROOLS_DEFAULT" name="no" priority="2" type="code" dialect="java" >return true;</constraint>
+        <constraint toNodeId="5" toType="DROOLS_DEFAULT" name="yes" priority="1" type="code" dialect="java" >return automatedTest.isSuccess() &amp;&amp; anotherAutomatedTest.isSuccess();</constraint>
+      </constraints>
+    </split>
+    <end id="7" name="Release Aborted" x="239" y="448" width="169" height="40" />
+    <split id="8" name="Start tests" x="184" y="160" width="80" height="40" type="1" />
+    <workItem id="9" name="Automated Test" x="16" y="232" width="192" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>Automated Test</value>
+        </parameter>
+      </work>
+      <mapping type="out" from="Build" to="automatedTest" />
+    </workItem>
+    <join id="11" name="Test complete" x="174" y="304" width="98" height="40" type="1" />
+    <workItem id="12" name="Another Automated Test" x="240" y="232" width="192" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>Another Automated Test</value>
+        </parameter>
+      </work>
+      <mapping type="out" from="Build" to="anotherAutomatedTest" />
+    </workItem>
+  </nodes>
+
+  <connections>
+    <connection from="1" to="2" />
+    <connection from="5" to="3" />
+    <connection from="6" to="5" />
+    <connection from="11" to="6" />
+    <connection from="6" to="7" />
+    <connection from="2" to="8" />
+    <connection from="8" to="9" />
+    <connection from="9" to="11" />
+    <connection from="12" to="11" />
+    <connection from="8" to="12" />
+  </connections>
+
+</process>

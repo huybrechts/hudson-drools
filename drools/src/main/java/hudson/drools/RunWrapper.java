@@ -2,6 +2,7 @@ package hudson.drools;
 
 import hudson.model.Hudson;
 import hudson.model.Job;
+import hudson.model.Label;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Result;
@@ -12,6 +13,12 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.MarshallingContext;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 public class RunWrapper implements Externalizable {
 
@@ -50,7 +57,7 @@ public class RunWrapper implements Externalizable {
 
 	@Override
 	public String toString() {
-		return run.getFullDisplayName();
+		return run != null ? run.getFullDisplayName() : "";
 	}
 
 	private String getParameter(ParametersAction parameters, String name) {
@@ -110,4 +117,21 @@ public class RunWrapper implements Externalizable {
 
 	}
 
+    public static final class ConverterImpl implements Converter {
+        public ConverterImpl() {
+        }
+
+        public boolean canConvert(Class type) {
+            return type==RunWrapper.class;
+        }
+
+        public void marshal(Object source, HierarchicalStreamWriter writer, MarshallingContext context) {
+            RunWrapper src = (RunWrapper) source;
+            writer.setValue(runToString(src.run));
+        }
+
+        public Object unmarshal(HierarchicalStreamReader reader, final UnmarshallingContext context) {
+            return stringToRun(reader.getValue());
+        }
+    }
 }

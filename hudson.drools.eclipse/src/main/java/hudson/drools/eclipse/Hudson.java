@@ -86,7 +86,7 @@ public class Hudson {
 
 	public void validateProject(String project) throws IOException,
 			NoSuchProjectException, NotADroolsProjectException {
-		URL u = new URL(url + "/job/" + project + "/api/xml");
+		URL u = new URL(url + "/job/" + project.replace(" ", "%20") + "/api/xml"); // bad, I know
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
 
@@ -119,7 +119,7 @@ public class Hudson {
 			CoreException, NoSuchProjectException, NotADroolsProjectException {
 		validateProject(project);
 
-		URL u = new URL(url + "/job/" + project + "/submitWorkflow");
+		URL u = new URL(url + "/job/" + project.replace(" ", "%20") + "/submitWorkflow");
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 		addAuthentication(conn, userName, password);
 		conn.setDoOutput(true);
@@ -143,7 +143,7 @@ public class Hudson {
 		String projectXml = createProjectXml(project, ruleFlowFile);
 
 		URL u = new URL(url + "/createItem?name="
-				+ URLEncoder.encode(project, "UTF-8"));
+				+ project.replace(" ", "%20"));
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
 		conn.setUseCaches(false);
@@ -251,7 +251,10 @@ public class Hudson {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		HttpURLConnection conn = (HttpURLConnection) new URL("http://localhost:8080/manage").openConnection();
+		HttpURLConnection conn = (HttpURLConnection) new URL("http://localhost:8080/job/Staging%20Workflow%203/api/xml").openConnection();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+		String line =null;
+		while (( line = reader.readLine()) != null) System.out.println(line);
 		System.out.println(conn.getResponseCode());
 		
 		// 401 = bad username or password

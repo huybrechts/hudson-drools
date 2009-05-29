@@ -1,6 +1,7 @@
 package hudson.drools.eclipse;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
@@ -94,5 +95,5 @@ public class DeployAction implements IObjectActionDelegate {
 		selectedFile = (IFile) ((StructuredSelection) selection)
 				.getFirstElement();
 	}
-
+	
 }
