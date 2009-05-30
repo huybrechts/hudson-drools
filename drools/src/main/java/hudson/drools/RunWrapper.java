@@ -23,6 +23,8 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 public class RunWrapper implements Externalizable {
+	
+//	private static final long serialVersionUID = 1;
 
 	private transient Run<?, ?> run;
 
@@ -89,11 +91,15 @@ public class RunWrapper implements Externalizable {
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(runToString(run));
+		String s = runToString(run);
+		System.out.println("writeExternal: " + s);
+		out.writeUTF(s);
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		run = stringToRun(in.readUTF());
+		String s = in.readUTF();
+		System.out.println("readExternal: " + s);
+		run = stringToRun(s);
 	}
 	
 	private static String runToString(Run run) {
@@ -111,7 +117,7 @@ public class RunWrapper implements Externalizable {
 		String runNumber = id.substring(hash + 1);
 		Hudson hudson = Hudson.getInstance();
 		if (hudson == null) return null; // in simple unit test
-		Job<?, ?> job = (Job<?, ?>) hudson.getItem(jobName);
+		Job<?, ?> job = (Job<?, ?>) hudson.getItemMap().get(jobName);
 		if (job == null) return null;
 		Run<?, ?> run = job.getBuildByNumber(Integer.parseInt(runNumber));
 

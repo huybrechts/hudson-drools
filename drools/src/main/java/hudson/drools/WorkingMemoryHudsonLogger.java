@@ -63,6 +63,7 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
     
     private void addNodeEnterLog(long processInstanceId, String processId, String nodeInstanceId, String nodeId) {
 		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		if (run != null)
 		run.addLog(new NodeInstanceLog(NodeInstanceLog.TYPE_ENTER,
 				processInstanceId, processId, nodeInstanceId,
 				nodeId));
@@ -70,6 +71,7 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
     
     private void addNodeExitLog(long processInstanceId, String processId, String nodeInstanceId, String nodeId) {
 		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		if (run != null)
 		run.addLog(new NodeInstanceLog(NodeInstanceLog.TYPE_EXIT,
 				processInstanceId, processId, nodeInstanceId,
 				nodeId));

@@ -4,6 +4,7 @@ import hudson.Functions;
 import hudson.model.BallColor;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;
+import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
@@ -113,9 +114,9 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		}
 		if (result == null) {
 			// probably because the workflow has been completed
-			for (DroolsProject project : Hudson.getInstance().getItems(
-					DroolsProject.class)) {
-				for (DroolsRun run : project.getBuilds()) {
+			for (Item item: Hudson.getInstance().getItemMap().values()) {
+				if (item instanceof DroolsProject)
+				for (DroolsRun run : ((DroolsProject) item).getBuilds()) {
 					if (run.getProcessInstanceId() == processInstanceId) {
 						return run;
 					}

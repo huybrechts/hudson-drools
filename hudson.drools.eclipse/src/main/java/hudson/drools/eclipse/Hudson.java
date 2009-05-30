@@ -67,11 +67,13 @@ public class Hudson {
 
 	public List<String> getWorkflowProjects() throws IOException {
 		URL u = new URL(url + "/plugin/drools/workflowProjects");
+		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
 		
 		List<String> result = new ArrayList<String>();
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new InputStreamReader(u.openStream()));
+			reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 			String line =null;
 			while ((line = reader.readLine()) != null) {
 				result.add(line);

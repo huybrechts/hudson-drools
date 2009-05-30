@@ -1,12 +1,14 @@
 package hudson.drools;
 
 import hudson.model.Job;
+import hudson.security.ACL;
 
 import java.io.IOException;
 import java.util.Map;
 
 import javax.servlet.ServletException;
 
+import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -74,6 +76,7 @@ public class ScriptExecution {
 		new Thread(new Runnable() {
 
 			public void run() {
+				SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 				result = Result.RUNNING;
 
 				try {

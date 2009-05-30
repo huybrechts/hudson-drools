@@ -5,11 +5,14 @@ import hudson.model.Hudson;
 import hudson.model.Run;
 import hudson.model.listeners.ItemListener;
 import hudson.model.listeners.RunListener;
+import hudson.security.ACL;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
+import org.acegisecurity.Authentication;
+import org.acegisecurity.context.SecurityContextHolder;
 import org.drools.KnowledgeBase;
 import org.drools.KnowledgeBaseFactory;
 import org.drools.SessionConfiguration;
@@ -133,13 +136,16 @@ public class PluginImpl extends Plugin {
 
 	public void completeWorkItem(long workItemId, Map<String, Object> results) {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		try {
+			SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 			Thread.currentThread().setContextClassLoader(
 					getClass().getClassLoader());
 
 			getSession().getWorkItemManager().completeWorkItem(workItemId,
 					results);
 		} finally {
+			SecurityContextHolder.getContext().setAuthentication(auth);
 			Thread.currentThread().setContextClassLoader(cl);
 		}
 	}
