@@ -138,10 +138,36 @@
  		</dependency>
 
 
+    <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>hudson-war</artifactId>
+        <type>war</type>
+        <version>${hudson.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>hudson-core</artifactId>
+        <version>${hudson.version}</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>hudson-test-harness</artifactId>
+        <version>${hudson.version}</version>
+        <scope>test</scope>
+    </dependency>
+
 	</dependencies>
+	
+	<dependencyManagement>
+	<dependencies>
+	</dependencies>
+	</dependencyManagement>
 
 	<properties>
-		<drools.version>5.0.1.SNAPSHOT</drools.version>
+		<drools.version>5.1.0.SNAPSHOT</drools.version>
+		<hudson.version>1.309-SNAPSHOT</hudson.version>
 	</properties>
 
 	<repositories>

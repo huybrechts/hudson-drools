@@ -16,10 +16,12 @@ import hudson.model.ResourceList;
 import hudson.model.RunMap;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
+import hudson.model.User;
 import hudson.model.Cause.UserCause;
 import hudson.model.Queue.Executable;
 import hudson.model.RunMap.Constructor;
 import hudson.scheduler.CronTabList;
+import hudson.security.AuthorizationMatrixProperty;
 
 import java.io.File;
 import java.io.IOException;
@@ -394,6 +396,22 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			}
 		}
 		return null;
+	}
+	
+	
+	public List<String> getUsersWithBuildPermission() {
+		List<String> result = new ArrayList<String>();
+		
+		AuthorizationMatrixProperty amp = getProperty(AuthorizationMatrixProperty.class);
+		if (amp != null && amp.isUseProjectSecurity()) {
+			for (String sid: amp.getAllSIDs()) {
+				if (amp.hasPermission(sid, Job.BUILD)) {
+					result.add(sid);
+				}
+			}
+		}
+		
+		return result;
 	}
 
 }

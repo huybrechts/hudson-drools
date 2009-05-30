@@ -40,7 +40,7 @@ public class HumanTaskBuilder extends BuilderSupport {
 			Boolean _privateTask = (Boolean) attributes.get("private");
 			boolean privateTask = (_privateTask != null) ? _privateTask
 					.booleanValue() : false;
-			String title = (String) attributes.get("title");
+			String title = (String) attributes.get("title").toString();
 			return task = new HumanTask((String) title, privateTask);
 		}
 		Object type = attributes.get("type");
