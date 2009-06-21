@@ -64,7 +64,6 @@
         </parameter>
         <parameter name="Comment" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value></value>
         </parameter>
         <parameter name="Content" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
@@ -76,7 +75,6 @@ task(title: "Vote for $user on $build ($version)") {
         </parameter>
         <parameter name="Priority" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value></value>
         </parameter>
         <parameter name="Skippable" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
@@ -84,7 +82,6 @@ task(title: "Vote for $user on $build ($version)") {
         </parameter>
         <parameter name="TaskName" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value></value>
         </parameter>
       </work>
       <mapping type="in" from="build" to="build" />

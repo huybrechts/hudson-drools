@@ -519,7 +519,7 @@ public class RuleFlowRenderer {
 
 		@Override
 		public Image getImage() {
-			return humanTaskImage;
+			return scriptImage;
 		}
 
 	}
@@ -660,6 +660,8 @@ public class RuleFlowRenderer {
 			.getResource("/icons/join.gif"));
 	private static Image eventImage = toolkit.getImage(RuleFlowRenderer.class
 			.getResource("/icons/event.gif"));
+	private static Image scriptImage = toolkit.getImage(RuleFlowRenderer.class
+			.getResource("/icons/open.gif"));
 	private static Image humanTaskImage = toolkit
 			.getImage(RuleFlowRenderer.class
 					.getResource("/icons/human_task.gif"));
