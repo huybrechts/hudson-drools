@@ -27,6 +27,7 @@ import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.framework.io.IOException2;
 
 public class HumanTask extends AbstractModelObject implements Serializable,
 		AccessControlled {
@@ -90,8 +91,13 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 			}
 		}
 
-		Hudson.getInstance().getPlugin(PluginImpl.class).completeWorkItem(
-				workItemId, results);
+		try {
+			PluginImpl.getInstance().run(
+					new CompleteWorkItemCallable(PluginImpl.getInstance()
+							.getSession(), workItemId, results));
+		} catch (Exception e) {
+			throw new IOException2("Error while completing human task #" + workItemId, e);
+		}
 
 		this.answers = values;
 
@@ -101,7 +107,7 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 
 		rsp.forwardToPreviousPage(req);
 	}
-	
+
 	public void cancel() throws IOException {
 		status = Status.CANCELED;
 		run.save();
@@ -167,12 +173,11 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 	@Override
 	public String toString() {
 		if (answers != null) {
-			return String.format(
-					"HumanTask(%s) parameters: %s answers: %s",
+			return String.format("HumanTask(%s) parameters: %s answers: %s",
 					displayName, parameterDefinitions, answers);
 		} else {
-			return String.format("HumanTask(%s) parameters: %s",
-					displayName, parameterDefinitions);
+			return String.format("HumanTask(%s) parameters: %s", displayName,
+					parameterDefinitions);
 		}
 	}
 
@@ -187,7 +192,7 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 	public void setActorId(String actorId) {
 		this.actorId = actorId;
 	}
-	
+
 	public boolean canRead() {
 		if (privateTask) {
 			return actorId == null || actorId.equals(User.current().getId());

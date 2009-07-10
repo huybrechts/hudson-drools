@@ -16,7 +16,6 @@ import hudson.model.ResourceList;
 import hudson.model.RunMap;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
-import hudson.model.User;
 import hudson.model.Cause.UserCause;
 import hudson.model.Queue.Executable;
 import hudson.model.RunMap.Constructor;
@@ -199,15 +198,6 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			Process process = knowledgePackages.iterator().next()
 					.getProcesses().iterator().next();
 
-/* fails on startup
-			DroolsProject alreadyDeployed = checkAlreadyDeployed(process
-					.getId());
-			if (alreadyDeployed != null) {
-				throw new IllegalArgumentException("Another project ("
-						+ alreadyDeployed.getDisplayName()
-						+ ") is already deployed with this process id");
-			}
-*/
 			processId = process.getId();
 
 			PluginImpl.getInstance().getKnowledgeBase().addKnowledgePackages(
@@ -388,17 +378,6 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		PluginImpl.getInstance().getKnowledgeBase().removeProcess(processId);
 	}
 
-	private DroolsProject checkAlreadyDeployed(String processId) {
-		for (DroolsProject project : Hudson.getInstance().getItems(
-				DroolsProject.class)) {
-			if (project != this && project.getProcessId().equals(processId)) {
-				return project;
-			}
-		}
-		return null;
-	}
-	
-	
 	public List<String> getUsersWithBuildPermission() {
 		List<String> result = new ArrayList<String>();
 		

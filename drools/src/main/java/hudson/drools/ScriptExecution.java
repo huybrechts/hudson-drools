@@ -84,8 +84,8 @@ public class ScriptExecution {
 							.getLogWriter(), parameters);
 					result = Result.COMPLETED;
 
-					PluginImpl.getInstance().completeWorkItem(workItemId,
-							scriptResults);
+					
+					PluginImpl.getInstance().run(new CompleteWorkItemCallable(PluginImpl.getInstance().getSession(), workItemId, scriptResults));
 
 				} catch (Exception e) {
 					result = Result.FAILED;

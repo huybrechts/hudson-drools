@@ -1,9 +1,7 @@
 package hudson.drools;
 
-import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.XmlFile;
-import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Descriptor.FormException;
@@ -16,7 +14,6 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
-import org.hibernate.dialect.MySQLDialect;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -24,8 +21,6 @@ import org.kohsuke.stapler.StaplerResponse;
 public class DroolsManagement extends ManagementLink {
 
 	private List<Script> scripts;
-
-	private DBSettings dbSettings;
 
 	public DroolsManagement() {
 		try {
@@ -61,11 +56,6 @@ public class DroolsManagement extends ManagementLink {
 		JSONObject form = req.getSubmittedForm();
 		setScripts(req.bindJSONToList(Script.class, form.get("scripts")));
 
-		String dbs = req.getParameter("dbSettings");
-		int dbsIdx = Integer.parseInt(dbs);
-		dbSettings = getDBSettingsDescriptors().get(dbsIdx).newInstance(req,
-				form.getJSONObject("dbSettings"));
-
 		save();
 
 		rsp.forwardToPreviousPage(req);
@@ -94,26 +84,6 @@ public class DroolsManagement extends ManagementLink {
 			}
 		}
 		return null;
-	}
-
-	public DBSettings getDbSettings() {
-		if (dbSettings == null) {
-
-			if (System.getProperty("jboss.home.dir") != null) {
-				dbSettings = new JBossDBSettings();
-			} else {
-				dbSettings = new EmbeddedDBSettings();
-			}
-		}
-		return dbSettings;
-	}
-
-	public DescriptorExtensionList<DBSettings, Descriptor<DBSettings>> getDBSettingsDescriptors() {
-		return DBSettings.all();
-	}
-
-	public void setDbSettings(DBSettings dbSettings) {
-		this.dbSettings = dbSettings;
 	}
 
 }

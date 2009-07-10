@@ -35,8 +35,6 @@ import org.kohsuke.stapler.StaplerResponse;
 public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		Queue.Executable {
 
-	private static final String RUN = "Run";
-
 	private static Logger logger = Logger.getLogger(DroolsRun.class.getName());
 
 	private List<HumanTask> humanTasks;
@@ -114,13 +112,13 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		}
 		if (result == null) {
 			// probably because the workflow has been completed
-			for (Item item: Hudson.getInstance().getItemMap().values()) {
+			for (Item item : Hudson.getInstance().getItemMap().values()) {
 				if (item instanceof DroolsProject)
-				for (DroolsRun run : ((DroolsProject) item).getBuilds()) {
-					if (run.getProcessInstanceId() == processInstanceId) {
-						return run;
+					for (DroolsRun run : ((DroolsProject) item).getBuilds()) {
+						if (run.getProcessInstanceId() == processInstanceId) {
+							return run;
+						}
 					}
-				}
 			}
 		}
 		return result;
@@ -129,7 +127,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public static DroolsRun getFromProcessInstance(
 			ProcessInstance processInstance) {
 		RunWrapper wrapper = (RunWrapper) ((WorkflowProcessInstance) processInstance)
-				.getVariable(RUN);
+				.getVariable(Constants.RUN);
 		if (wrapper == null) {
 			return null;
 		}
@@ -155,25 +153,17 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 
 		public Result run(BuildListener listener) throws Exception,
 				hudson.model.Run.RunnerAbortedException {
-			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			try {
-				Thread.currentThread().setContextClassLoader(
-						getClass().getClassLoader());
-				StatefulKnowledgeSession ksession = PluginImpl.getInstance()
-						.getSession();
 
-				Map<String, Object> parameters = new HashMap<String, Object>();
-				parameters.put(RUN, new RunWrapper(DroolsRun.this));
-				processInstanceId = ksession.startProcess(
-						getParent().getProcessId(), parameters).getId();
-				ProcessInstance instance = getProcessInstance();
-				if (instance != null && instance.getState() != ProcessInstance.STATE_ABORTED) {
-					return Result.SUCCESS;
-				} else {
-					return Result.FAILURE;
-				}
-			} finally {
-				Thread.currentThread().setContextClassLoader(cl);
+			ProcessInstance instance = PluginImpl.getInstance().run(
+					new StartProcessCallable(DroolsRun.this, PluginImpl
+							.getInstance().getSession(), getParent()
+							.getProcessId()));
+
+			if (instance != null
+					&& instance.getState() != ProcessInstance.STATE_ABORTED) {
+				return Result.SUCCESS;
+			} else {
+				return Result.FAILURE;
 			}
 		}
 
@@ -243,7 +233,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public BallColor getIconColor() {
 		if (status == Status.STARTED) {
 			return BallColor.BLUE_ANIME;
-		} else if (status == Status.ABORTED){
+		} else if (status == Status.ABORTED) {
 			return BallColor.GREY;
 		} else {
 			return BallColor.BLUE;
@@ -294,20 +284,21 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public void doDoCancel(StaplerRequest req, StaplerResponse rsp)
 			throws ServletException, IOException {
 		checkPermission(Job.BUILD);
-		
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
 		try {
-			Thread.currentThread().setContextClassLoader(
-					getClass().getClassLoader());
-			PluginImpl.getInstance().getSession().abortProcessInstance(
-					processInstanceId);
-		} finally {
-			Thread.currentThread().setContextClassLoader(cl);
+			PluginImpl.getInstance().run(
+					new CancelProcessCallable(PluginImpl.getInstance()
+							.getSession(), processInstanceId));
+		} catch (Exception e) {
+			throw new ServletException(
+					"Error while canceling process instance #"
+							+ processInstanceId, e);
 		}
-		// TODO check if we get this through events already ? 
+
+		// TODO check if we get this through events already ?
 		setStatus(Status.ABORTED);
 
-        rsp.sendRedirect2(req.getContextPath()+'/' + getUrl());
+		rsp.sendRedirect2(req.getContextPath() + '/' + getUrl());
 	}
-	
+
 }

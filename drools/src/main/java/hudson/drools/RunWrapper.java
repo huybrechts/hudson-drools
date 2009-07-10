@@ -7,14 +7,11 @@ import hudson.model.ParametersAction;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.StringParameterValue;
-import hudson.model.User;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
@@ -23,6 +20,8 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 public class RunWrapper implements Externalizable {
+	
+	public static final int serialVersionUID = 1;
 	
 //	private static final long serialVersionUID = 1;
 
@@ -92,13 +91,11 @@ public class RunWrapper implements Externalizable {
 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		String s = runToString(run);
-		System.out.println("writeExternal: " + s);
 		out.writeUTF(s);
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		String s = in.readUTF();
-		System.out.println("readExternal: " + s);
 		run = stringToRun(s);
 	}
 	

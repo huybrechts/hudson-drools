@@ -37,16 +37,17 @@ public class WorkItemAction extends ParametersAction {
 	private final long workItemId;
 	private final long processInstanceId;
 	private final String projectName;
-	
-	private Run<?,?> run;
+
+	private Run<?, ?> run;
 
 	private final boolean completeWhenUnstable;
 	private final boolean completeWhenFailed;
-	
+
 	private boolean completed = false;
-	
+
 	public WorkItemAction(long workItemId, long processInstanceId,
-			String projectName, boolean completeWhenFailed, boolean completeWhenUnstable, List<ParameterValue> parameters) {
+			String projectName, boolean completeWhenFailed,
+			boolean completeWhenUnstable, List<ParameterValue> parameters) {
 		super(parameters);
 		this.workItemId = workItemId;
 		this.processInstanceId = processInstanceId;
@@ -71,49 +72,43 @@ public class WorkItemAction extends ParametersAction {
 		AbstractProject project = (AbstractProject) Hudson.getInstance()
 				.getItem(projectName);
 		if (project == null) {
-			throw new IllegalArgumentException("project " + projectName + " does not exist (work item " + workItemId + ")");
+			throw new IllegalArgumentException("project " + projectName
+					+ " does not exist (work item " + workItemId + ")");
 		}
-		project.scheduleBuild(0, new DroolsCause("Started by workflow"),
-				this);
+		project.scheduleBuild(0, new DroolsCause("Started by workflow"), this);
 	}
 
 	public void buildComplete(Run r) {
 		run = r;
 		save();
-		
+
 		// TODO add logging when this happens
 		if (!completeWhenUnstable && r.getResult() == Result.UNSTABLE) {
 			return;
 		}
-		if (!completeWhenFailed && r.getResult().isWorseOrEqualTo(Result.FAILURE)) {
+		if (!completeWhenFailed
+				&& r.getResult().isWorseOrEqualTo(Result.FAILURE)) {
 			return;
 		}
-		
+
 		complete();
-		
+
 	}
 
 	private void complete() {
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		try {
-			Thread.currentThread().setContextClassLoader(
-					getClass().getClassLoader());
 
-			StatefulKnowledgeSession session = PluginImpl.getInstance()
-					.getSession();
-			WorkItemManager workItemManager = session.getWorkItemManager();
-			Map<String, Object> result = new HashMap<String, Object>();
-			result.put(Constants.BUILD, new RunWrapper(run));
-			workItemManager.completeWorkItem(workItemId, result);
-			
+		try {
+			PluginImpl.getInstance().run(
+					new CompleteWorkItemCallable(PluginImpl.getInstance()
+							.getSession(), workItemId, run));
+
 			completed = true;
+
 			save();
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error while finalizing "
 					+ run.getDisplayName() + " and completing WorkItem "
 					+ workItemId, e);
-		} finally {
-			Thread.currentThread().setContextClassLoader(cl);
 		}
 	}
 
@@ -124,30 +119,36 @@ public class WorkItemAction extends ParametersAction {
 			logger.log(Level.WARNING, "error while saving run", e);
 		}
 	}
-	
-	public void doRestart(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
+
+	public void doRestart(StaplerRequest req, StaplerResponse rsp)
+			throws ServletException, IOException {
 		run.checkPermission(Job.BUILD);
-		
+
 		if (run != null && run.getResult().isWorseOrEqualTo(Result.UNSTABLE)) {
-			new WorkItemAction(workItemId, processInstanceId, projectName, completeWhenFailed, completeWhenUnstable, getParameters()).scheduleBuild();
+			new WorkItemAction(workItemId, processInstanceId, projectName,
+					completeWhenFailed, completeWhenUnstable, getParameters())
+					.scheduleBuild();
 		} else {
-			throw new IllegalArgumentException("Cannot restart a build that did not fail.");
+			throw new IllegalArgumentException(
+					"Cannot restart a build that did not fail.");
 		}
-		
+
 		rsp.forwardToPreviousPage(req);
 	}
 
-	public void doComplete(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
+	public void doComplete(StaplerRequest req, StaplerResponse rsp)
+			throws ServletException, IOException {
 		run.checkPermission(Job.BUILD);
 		if (run == null) {
-			throw new IllegalArgumentException("Cannot complete before the build is done");
+			throw new IllegalArgumentException(
+					"Cannot complete before the build is done");
 		}
-		
+
 		complete();
-		
+
 		rsp.forwardToPreviousPage(req);
 	}
-	
+
 	@Override
 	public String getDisplayName() {
 		return "Work Item";
@@ -185,18 +186,20 @@ public class WorkItemAction extends ParametersAction {
 		if (run.getResult().isWorseOrEqualTo(Result.FAILURE)) {
 			return !completeWhenFailed;
 		}
-		
+
 		return false;
 	}
-	
+
 	public boolean isAllowComplete() {
 		DroolsRun droolsRun = getDroolsRun();
-		return !completed && run != null && droolsRun != null && !droolsRun.isCompleted();
+		return !completed && run != null && droolsRun != null
+				&& !droolsRun.isCompleted();
 	}
 
 	public DroolsRun getDroolsRun() {
-		for (DroolsProject project: Hudson.getInstance().getItems(DroolsProject.class)) {
-			for (DroolsRun run: project.getBuilds()) {
+		for (DroolsProject project : Hudson.getInstance().getItems(
+				DroolsProject.class)) {
+			for (DroolsRun run : project.getBuilds()) {
 				if (run.getProcessInstanceId() == processInstanceId) {
 					return run;
 				}
@@ -204,9 +207,9 @@ public class WorkItemAction extends ParametersAction {
 		}
 		return null;
 	}
-	
-	public static Run findRun(Job<?,?> project, long processInstanceId) {
-		for (Run run: project.getBuilds()) {
+
+	public static Run findRun(Job<?, ?> project, long processInstanceId) {
+		for (Run run : project.getBuilds()) {
 			WorkItemAction w = run.getAction(WorkItemAction.class);
 			if (w != null && w.processInstanceId == processInstanceId) {
 				return run;
@@ -214,7 +217,7 @@ public class WorkItemAction extends ParametersAction {
 		}
 		return null;
 	}
-	
+
 	public String getUrl() {
 		return getRun().getUrl() + "/workItem";
 	}
