@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/hudson.drools.feature_1.0.0.200907181556.jar" id="hudson.drools.feature" version="1.0.0.200907181556"/>
+   <feature url="features/hudson.drools.feature_1.0.0.200907181610.jar" id="hudson.drools.feature" version="1.0.0.200907181610"/>
 </site>
