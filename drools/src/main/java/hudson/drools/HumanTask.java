@@ -92,11 +92,11 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 		}
 
 		try {
-			PluginImpl.getInstance().run(
-					new CompleteWorkItemCallable(PluginImpl.getInstance()
-							.getSession(), workItemId, results));
+			run.getParent().run(
+					new CompleteWorkItemCallable(workItemId, results));
 		} catch (Exception e) {
-			throw new IOException2("Error while completing human task #" + workItemId, e);
+			throw new IOException2("Error while completing human task #"
+					+ workItemId, e);
 		}
 
 		this.answers = values;

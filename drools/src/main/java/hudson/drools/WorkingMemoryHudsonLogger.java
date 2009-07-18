@@ -1,7 +1,6 @@
 package hudson.drools;
 
 
-import org.drools.WorkingMemory;
 import org.drools.audit.WorkingMemoryLogger;
 import org.drools.audit.event.LogEvent;
 import org.drools.audit.event.RuleFlowLogEvent;
@@ -11,12 +10,11 @@ import org.drools.event.KnowledgeRuntimeEventManager;
 
 public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
     
-    public WorkingMemoryHudsonLogger(WorkingMemory workingMemory) {
-        super(workingMemory);
-    }
-    
-    public WorkingMemoryHudsonLogger(KnowledgeRuntimeEventManager session) {
+    private final DroolsProject project;
+
+    public WorkingMemoryHudsonLogger(KnowledgeRuntimeEventManager session, DroolsProject project) {
     	super(session);
+		this.project = project;
     }
 
     public void logEventCreated(LogEvent logEvent) {
@@ -43,7 +41,7 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
         
         if (logEvent instanceof RuleFlowLogEvent) {
         	long processInstanceId = ((RuleFlowLogEvent) logEvent).getProcessInstanceId();
-        	DroolsRun processInstance = DroolsRun.getFromProcessInstance(processInstanceId);
+        	DroolsRun processInstance = project.getFromProcessInstance(processInstanceId);
         	if (processInstance != null) {
         		processInstance.getLogWriter().println(logEvent);
         	}
@@ -55,14 +53,14 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
     }
     
     private void processCompleted(long processInstanceId) {
-		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		DroolsRun run = project.getFromProcessInstance(processInstanceId);
 		if (run != null) {
 			run.markCompleted();
 		}
     }
     
     private void addNodeEnterLog(long processInstanceId, String processId, String nodeInstanceId, String nodeId) {
-		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		DroolsRun run = project.getFromProcessInstance(processInstanceId);
 		if (run != null)
 		run.addLog(new NodeInstanceLog(NodeInstanceLog.TYPE_ENTER,
 				processInstanceId, processId, nodeInstanceId,
@@ -70,7 +68,7 @@ public class WorkingMemoryHudsonLogger extends WorkingMemoryLogger {
     }
     
     private void addNodeExitLog(long processInstanceId, String processId, String nodeInstanceId, String nodeId) {
-		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		DroolsRun run = project.getFromProcessInstance(processInstanceId);
 		if (run != null)
 		run.addLog(new NodeInstanceLog(NodeInstanceLog.TYPE_EXIT,
 				processInstanceId, processId, nodeInstanceId,

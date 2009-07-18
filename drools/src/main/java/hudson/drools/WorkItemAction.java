@@ -3,7 +3,6 @@
  */
 package hudson.drools;
 
-import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Hudson;
@@ -14,18 +13,12 @@ import hudson.model.Result;
 import hudson.model.Run;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
-import org.drools.runtime.StatefulKnowledgeSession;
-import org.drools.runtime.process.WorkItemManager;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -43,12 +36,16 @@ public class WorkItemAction extends ParametersAction {
 	private final boolean completeWhenUnstable;
 	private final boolean completeWhenFailed;
 
+	private final String droolsProjectName;
+
 	private boolean completed = false;
 
-	public WorkItemAction(long workItemId, long processInstanceId,
-			String projectName, boolean completeWhenFailed,
-			boolean completeWhenUnstable, List<ParameterValue> parameters) {
+	public WorkItemAction(String droolsProjectName, long workItemId,
+			long processInstanceId, String projectName,
+			boolean completeWhenFailed, boolean completeWhenUnstable,
+			List<ParameterValue> parameters) {
 		super(parameters);
+		this.droolsProjectName = droolsProjectName;
 		this.workItemId = workItemId;
 		this.processInstanceId = processInstanceId;
 		this.projectName = projectName;
@@ -97,10 +94,11 @@ public class WorkItemAction extends ParametersAction {
 
 	private void complete() {
 
+		DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
+				droolsProjectName);
+
 		try {
-			PluginImpl.getInstance().run(
-					new CompleteWorkItemCallable(PluginImpl.getInstance()
-							.getSession(), workItemId, run));
+			p.run(new CompleteWorkItemCallable(workItemId, run));
 
 			completed = true;
 
@@ -125,9 +123,9 @@ public class WorkItemAction extends ParametersAction {
 		run.checkPermission(Job.BUILD);
 
 		if (run != null && run.getResult().isWorseOrEqualTo(Result.UNSTABLE)) {
-			new WorkItemAction(workItemId, processInstanceId, projectName,
-					completeWhenFailed, completeWhenUnstable, getParameters())
-					.scheduleBuild();
+			new WorkItemAction(droolsProjectName, workItemId,
+					processInstanceId, projectName, completeWhenFailed,
+					completeWhenUnstable, getParameters()).scheduleBuild();
 		} else {
 			throw new IllegalArgumentException(
 					"Cannot restart a build that did not fail.");

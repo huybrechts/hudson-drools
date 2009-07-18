@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.drools.runtime.StatefulKnowledgeSession;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class Script {
@@ -31,12 +32,12 @@ public class Script {
 		return source;
 	}
 
-	public Map execute(PrintWriter output, Map<String, Object> parameters) throws Exception {
+	public Map execute(StatefulKnowledgeSession session, PrintWriter output, Map<String, Object> parameters) throws Exception {
 		Binding binding = new Binding();
 		for (Map.Entry<String, Object> entry : parameters.entrySet()) {
 			binding.setVariable(entry.getKey(), entry.getValue());
 		}
-		binding.setVariable("session", PluginImpl.getInstance().getSession());
+		binding.setVariable("session", session);
 		binding.setVariable("hudson", Hudson.getInstance());
 		binding.setVariable("args", parameters);
  		binding.setVariable("out", output);

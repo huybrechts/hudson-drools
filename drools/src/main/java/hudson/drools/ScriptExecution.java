@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 
 import org.acegisecurity.context.SecurityContextHolder;
+import org.drools.runtime.StatefulKnowledgeSession;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -80,12 +81,12 @@ public class ScriptExecution {
 				result = Result.RUNNING;
 
 				try {
-					Map<String, Object> scriptResults = script.execute(run
+					StatefulKnowledgeSession session = run.getParent().getSession();
+					Map<String, Object> scriptResults = script.execute(session, run
 							.getLogWriter(), parameters);
 					result = Result.COMPLETED;
-
 					
-					PluginImpl.getInstance().run(new CompleteWorkItemCallable(PluginImpl.getInstance().getSession(), workItemId, scriptResults));
+					run.getParent().run(new CompleteWorkItemCallable(workItemId, scriptResults));
 
 				} catch (Exception e) {
 					result = Result.FAILED;

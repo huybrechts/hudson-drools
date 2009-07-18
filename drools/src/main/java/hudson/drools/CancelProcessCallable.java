@@ -1,22 +1,18 @@
 package hudson.drools;
 
-import java.util.concurrent.Callable;
-
 import org.drools.runtime.StatefulKnowledgeSession;
 
-public class CancelProcessCallable implements Callable<Void> {
 
-	public CancelProcessCallable(StatefulKnowledgeSession session,
+public class CancelProcessCallable implements SessionCallable<Void> {
+
+	public CancelProcessCallable(
 			long processInstanceId) {
-		super();
-		this.session = session;
 		this.processInstanceId = processInstanceId;
 	}
 
-	private final StatefulKnowledgeSession session;
 	private final long processInstanceId;
 
-	public Void call() throws Exception {
+	public Void call(StatefulKnowledgeSession session) throws Exception {
 		session.abortProcessInstance(processInstanceId);
 
 		return null;

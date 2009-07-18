@@ -19,6 +19,13 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 	private static final String COMPLETE_WHEN_FAILED = "Complete when failed";
 	private static final String PROJECT = "Project";
 
+	private final DroolsProject project;
+
+	public BuildWorkItemHandler(DroolsProject project) {
+		super();
+		this.project = project;
+	}
+
 	public void abortWorkItem(WorkItem workItem, WorkItemManager manager) {
 	}
 
@@ -48,9 +55,9 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 			}
 		}
 
-		new WorkItemAction(workItem.getId(), workItem.getProcessInstanceId(),
-				projectName, completeWhenFailed != null ? completeWhenFailed
-						: false,
+		new WorkItemAction(project.getName(), workItem.getId(), workItem
+				.getProcessInstanceId(), projectName,
+				completeWhenFailed != null ? completeWhenFailed : false,
 				completeWhenUnstable != null ? completeWhenUnstable : false,
 				values).scheduleBuild();
 

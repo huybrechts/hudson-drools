@@ -21,9 +21,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 public class RunWrapper implements Externalizable {
 	
-	public static final int serialVersionUID = 1;
-	
-//	private static final long serialVersionUID = 1;
+	private static final long serialVersionUID = 1;
 
 	private transient Run<?, ?> run;
 

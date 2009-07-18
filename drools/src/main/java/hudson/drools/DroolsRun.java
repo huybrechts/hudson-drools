@@ -3,8 +3,6 @@ package hudson.drools;
 import hudson.Functions;
 import hudson.model.BallColor;
 import hudson.model.BuildListener;
-import hudson.model.Hudson;
-import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
@@ -14,9 +12,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 
@@ -25,7 +21,6 @@ import javax.servlet.ServletOutputStream;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.dom4j.DocumentException;
-import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkflowProcessInstance;
 import org.kohsuke.stapler.Stapler;
@@ -90,11 +85,6 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		return null;
 	}
 
-	public ProcessInstance getProcessInstance() {
-		return PluginImpl.getInstance().getSession().getProcessInstance(
-				processInstanceId);
-	}
-
 	/*
 	 * We need two strategies two find the DroolsRun. When the process is
 	 * starting, the DroolsRun does not now it processInstanceId yet, so we
@@ -102,27 +92,17 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	 * 
 	 * After the process is completed, the processInstance or variable will be
 	 * gone, so we need to iterate over all the builds to find the right one.
+	 * public static DroolsRun getFromProcessInstance(long processInstanceId) {
+	 * DroolsRun result = null; ProcessInstance processInstance =
+	 * PluginImpl.getInstance().getSession()
+	 * .getProcessInstance(processInstanceId); if (processInstance != null) {
+	 * result = getFromProcessInstance(processInstance); } if (result == null) {
+	 * // probably because the workflow has been completed for (Item item :
+	 * Hudson.getInstance().getItemMap().values()) { if (item instanceof
+	 * DroolsProject) for (DroolsRun run : ((DroolsProject) item).getBuilds()) {
+	 * if (run.getProcessInstanceId() == processInstanceId) { return run; } } }
+	 * } return result; }
 	 */
-	public static DroolsRun getFromProcessInstance(long processInstanceId) {
-		DroolsRun result = null;
-		ProcessInstance processInstance = PluginImpl.getInstance().getSession()
-				.getProcessInstance(processInstanceId);
-		if (processInstance != null) {
-			result = getFromProcessInstance(processInstance);
-		}
-		if (result == null) {
-			// probably because the workflow has been completed
-			for (Item item : Hudson.getInstance().getItemMap().values()) {
-				if (item instanceof DroolsProject)
-					for (DroolsRun run : ((DroolsProject) item).getBuilds()) {
-						if (run.getProcessInstanceId() == processInstanceId) {
-							return run;
-						}
-					}
-			}
-		}
-		return result;
-	}
 
 	public static DroolsRun getFromProcessInstance(
 			ProcessInstance processInstance) {
@@ -154,10 +134,8 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		public Result run(BuildListener listener) throws Exception,
 				hudson.model.Run.RunnerAbortedException {
 
-			ProcessInstance instance = PluginImpl.getInstance().run(
-					new StartProcessCallable(DroolsRun.this, PluginImpl
-							.getInstance().getSession(), getParent()
-							.getProcessId()));
+			ProcessInstance instance = getParent().run(
+					new StartProcessCallable(DroolsRun.this, getParent().getProcessId()));
 
 			if (instance != null
 					&& instance.getState() != ProcessInstance.STATE_ABORTED) {
@@ -286,9 +264,8 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		checkPermission(Job.BUILD);
 
 		try {
-			PluginImpl.getInstance().run(
-					new CancelProcessCallable(PluginImpl.getInstance()
-							.getSession(), processInstanceId));
+			getParent().run(
+					new CancelProcessCallable(processInstanceId));
 		} catch (Exception e) {
 			throw new ServletException(
 					"Error while canceling process instance #"

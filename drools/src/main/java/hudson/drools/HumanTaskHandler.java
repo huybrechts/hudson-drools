@@ -17,7 +17,12 @@ public class HumanTaskHandler implements WorkItemHandler {
 	private static final String ACTOR_ID = "ActorId";
 	private static final String CONTENT = "Content";
 	private static final Logger logger = Logger.getLogger(HumanTaskHandler.class.getName());
+	private final DroolsProject project;
 	
+	public HumanTaskHandler(DroolsProject project) {
+		this.project = project;
+	}
+
 	public void abortWorkItem(WorkItem workItem, WorkItemManager manager) {
 		HumanTask humanTask = HumanTask.getHumanTaskByWorkItemId((int) workItem.getId());
 		if (humanTask != null) {
@@ -42,7 +47,7 @@ public class HumanTaskHandler implements WorkItemHandler {
 		HumanTask question = (HumanTask) shell.evaluate(codeSource);
 		
 		long processInstanceId = workItem.getProcessInstanceId();
-		DroolsRun run = DroolsRun.getFromProcessInstance(processInstanceId);
+		DroolsRun run = project.getFromProcessInstance(processInstanceId);
 		question.setWorkItemId(workItem.getId());
 		question.setActorId((String) workItem.getParameter(ACTOR_ID));
 		run.addHumanTask(question);
