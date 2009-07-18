@@ -796,6 +796,10 @@ a
 copy of the Program in return for a fee.
    </license>
 
+   <url>
+      <discovery label="Drools" url="http://downloads.jboss.com/drools/updatesite3.4/"/>
+   </url>
+
    <plugin
          id="hudson.drools"
          download-size="0"
