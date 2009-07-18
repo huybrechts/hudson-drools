@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/hudson.drools.feature_1.0.0.200907181634.jar" id="hudson.drools.feature" version="1.0.0.200907181634">
+   <feature url="features/hudson.drools.feature_1.0.0.200907181642.jar" id="hudson.drools.feature" version="1.0.0.200907181642">
       <category name="Hudson"/>
    </feature>
    <category-def name="Hudson" label="Hudson"/>
