@@ -12,7 +12,7 @@ import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
 import org.jvnet.hudson.test.HudsonTestCase;
 
-public class DroolsTestCase extends HudsonTestCase {
+public abstract class DroolsTestCase extends HudsonTestCase {
 
 	@Override
 	protected void setUp() throws Exception {

@@ -32,7 +32,9 @@ public class PluginImpl extends Plugin {
 				
 				for (DroolsProject project: Hudson.getInstance().getItems(DroolsProject.class)) {
 					try {
-						project.run(new SignalEventCallable(r));
+						if (!project.isDisabled()) {
+							project.run(new SignalEventCallable(r));
+						}
 					} catch (Exception e) {
 						logger.log(
 								Level.WARNING, 

@@ -53,10 +53,12 @@ public class Staging1Test extends DroolsTestCase {
 			assertBuildResult(build, Result.SUCCESS, 1);
 			assertBuildResult(test, Result.SUCCESS, 1);
 
+			Thread.sleep(200);
+
 			Assert.assertTrue(deployScriptCalled);
 
 		} finally {
-//			System.out.println(wf.getLastBuild().getLog());
+			// System.out.println(wf.getLastBuild().getLog());
 		}
 
 	}
@@ -64,28 +66,22 @@ public class Staging1Test extends DroolsTestCase {
 	public void testWorkflowTestFailureAccepted() throws Exception {
 
 		test.getBuildersList().add(new FailureBuilder());
-		
+
 		wf.scheduleBuild(0);
 
-		try {
-			assertBuildResult(wf, Result.SUCCESS, 1);
-			assertBuildResult(build, Result.SUCCESS, 1);
-			assertBuildResult(test, Result.FAILURE, 1);
+		assertBuildResult(wf, Result.SUCCESS, 1);
+		assertBuildResult(build, Result.SUCCESS, 1);
+		assertBuildResult(test, Result.FAILURE, 1);
 
-			Assert.assertFalse(deployScriptCalled);
-			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
-			HtmlPage page = new WebClient().goTo(test.getLastBuild().getUrl());
-			((HtmlAnchor) page.getElementById("drools_accept")).click();
-			
-			Thread.sleep(500);
-			
-			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
-		} finally {
-			System.out.println(wf.getLastBuild().getLog());
-		}
+		Assert.assertFalse(deployScriptCalled);
+		Assert.assertFalse(wf.getLastBuild().isCompleted());
 
+		HtmlPage page = new WebClient().goTo(test.getLastBuild().getUrl());
+		((HtmlAnchor) page.getElementById("drools_accept")).click();
+
+		Thread.sleep(500);
+
+		Assert.assertTrue(wf.getLastBuild().isCompleted());
 	}
 
 	public void testWorkflowTestFailureRestarted() throws Exception {
@@ -101,21 +97,21 @@ public class Staging1Test extends DroolsTestCase {
 
 			Assert.assertFalse(deployScriptCalled);
 			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
-			//fix build
+
+			// fix build
 			test.getBuildersList().clear();
-			
+
 			HtmlPage page = new WebClient().goTo(test.getLastBuild().getUrl());
 			((HtmlAnchor) page.getElementById("drools_restart")).click();
-			
+
 			System.out.println(test.getBuilds());
 
 			assertBuildResult(test, Result.SUCCESS, 2);
 
 			Assert.assertTrue(deployScriptCalled);
-			
+
 			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
+
 		} finally {
 			System.out.println(wf.getLastBuild().getLog());
 		}

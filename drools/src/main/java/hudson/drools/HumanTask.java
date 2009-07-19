@@ -227,17 +227,5 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 	public boolean hasPermission(Permission permission) {
 		return getACL().hasPermission(permission);
 	}
-
-	public static HumanTask getHumanTaskByWorkItemId(long workItemId) {
-		for (DroolsProject p : Hudson.getInstance().getItems(
-				DroolsProject.class)) {
-			for (DroolsRun r : p.getBuilds()) {
-				HumanTask humanTask = r.getHumanTask((int) workItemId);
-				if (humanTask != null) {
-					return humanTask;
-				}
-			}
-		}
-		return null;
-	}
+	
 }

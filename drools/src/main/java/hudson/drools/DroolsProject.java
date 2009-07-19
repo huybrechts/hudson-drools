@@ -142,9 +142,9 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 			if (processXML != null) {
 				updateProcess(processXML);
+				session = createSession();
 			}
 
-			session = createSession();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -167,16 +167,10 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			return new DroolsProject(Hudson.getInstance(), name);
 		}
 
-		public String[] getAvailableProcessIds() {
-			return new String[] { "agility-ris-release-workflow",
-					"asb-trunk-release-workflow" };
-		}
-
 	}
 
 	public DescriptorImpl getDescriptor() {
-		return (DescriptorImpl) Hudson.getInstance().getDescriptor(
-				DroolsProject.class);
+		return (DescriptorImpl) Hudson.getInstance().getDescriptor(DroolsProject.class);
 	}
 
 	@Override
@@ -238,7 +232,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public boolean isDisabled() {
-		return disabled;
+		return session == null || disabled;
 	}
 
 	public void setDisabled(boolean disable) {
@@ -297,9 +291,10 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		return renderer.get();
 	}
 
-	public void doProcessInstanceImage(StaplerRequest req, StaplerResponse rsp)
+	public void doProcessImage(StaplerRequest req, StaplerResponse rsp)
 			throws IOException, XPathExpressionException, DocumentException {
 		ServletOutputStream output = rsp.getOutputStream();
+		rsp.setContentType("image/png");
 		getRuleFlowRenderer().write(output);
 		output.flush();
 		output.close();
@@ -357,7 +352,8 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 	@Override
 	protected void performDelete() throws IOException, InterruptedException {
-		session.dispose();
+		if (session != null) session.dispose();
+		super.performDelete();
 	}
 
 	public List<String> getUsersWithBuildPermission() {
@@ -455,10 +451,12 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 					KnowledgeBuilderErrors errors = kbuilder.getErrors();
 					StringBuilder sb = new StringBuilder();
 					if (errors.size() > 0) {
+						setDisabled(true);
+						
 						for (KnowledgeBuilderError error : errors) {
 							sb.append(error.getMessage()).append("\n");
 						}
-
+						
 						throw new IllegalArgumentException(
 								"Could not parse knowledge:\n" + sb);
 					}
@@ -480,6 +478,8 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 					DroolsProject.this.processId = processId;
 					DroolsProject.this.processXML = processXML;
+					
+					session = createSession();
 					
 					return null;
 				}

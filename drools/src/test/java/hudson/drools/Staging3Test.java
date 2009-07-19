@@ -31,10 +31,11 @@ public class Staging3Test extends DroolsTestCase {
 		super.setUp();
 
 		wf = createProject("staging-3", "staging-3.rf");
-		
+
 		build = hudson.createProject(FreeStyleProject.class, "Build");
 		test = hudson.createProject(FreeStyleProject.class, "Automated Test");
-		test2 = hudson.createProject(FreeStyleProject.class, "Another Automated Test");
+		test2 = hudson.createProject(FreeStyleProject.class,
+				"Another Automated Test");
 
 		deployScriptCalled = false;
 
@@ -81,22 +82,23 @@ public class Staging3Test extends DroolsTestCase {
 
 			Assert.assertFalse(deployScriptCalled);
 			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
+
 			Assert.assertEquals(1, wf.getLastBuild().getHumanTasks().size());
 			HumanTask humanTask = wf.getLastBuild().getHumanTasks().get(0);
-			
+
 			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
-			
-			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
+
+			HtmlForm form = page.getFormByName("drools-humanTask-"
+					+ humanTask.getWorkItemId());
 			((HtmlCheckBoxInput) form.getInputByName("value")).setChecked(true);
 			form.submit((HtmlButton) form.getFirstByXPath("//button"));
-			
+
 			Thread.sleep(500);
-			
+
 			Assert.assertTrue(deployScriptCalled);
-			
+
 			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
+
 		} finally {
 			System.out.println(wf.getLastBuild().getLog());
 		}
@@ -117,94 +119,26 @@ public class Staging3Test extends DroolsTestCase {
 
 			Assert.assertFalse(deployScriptCalled);
 			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
+
 			Assert.assertEquals(1, wf.getLastBuild().getHumanTasks().size());
 			HumanTask humanTask = wf.getLastBuild().getHumanTasks().get(0);
-			
+
 			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
-			
-			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
+
+			HtmlForm form = page.getFormByName("drools-humanTask-"
+					+ humanTask.getWorkItemId());
 			form.submit((HtmlButton) form.getFirstByXPath("//button"));
-			
+
 			Thread.sleep(500);
-			
+
 			Assert.assertFalse(deployScriptCalled);
-			
+
 			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
+
 		} finally {
 			System.out.println(wf.getLastBuild().getLog());
 		}
 
 	}
 
-	public void testWorkflowNoManualOverridex() throws Exception {
-
-		test2.getBuildersList().add(new FailureBuilder());
-
-		wf.scheduleBuild(0);
-
-		try {
-			assertBuildResult(wf, Result.SUCCESS, 1);
-			assertBuildResult(build, Result.SUCCESS, 1);
-			assertBuildResult(test, Result.SUCCESS, 1);
-			assertBuildResult(test2, Result.FAILURE, 1);
-
-			Assert.assertFalse(deployScriptCalled);
-			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
-			Assert.assertEquals(1, wf.getLastBuild().getHumanTasks().size());
-			HumanTask humanTask = wf.getLastBuild().getHumanTasks().get(0);
-			
-			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
-			
-			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
-			form.submit((HtmlButton) form.getFirstByXPath("//button"));
-			
-			Thread.sleep(500);
-			
-			Assert.assertFalse(deployScriptCalled);
-			
-			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
-		} finally {
-			System.out.println(wf.getLastBuild().getLog());
-		}
-
-	}
-
-	public void testWorkflowNoManualOverridexx() throws Exception {
-
-		test2.getBuildersList().add(new FailureBuilder());
-
-		wf.scheduleBuild(0);
-
-		try {
-			assertBuildResult(wf, Result.SUCCESS, 1);
-			assertBuildResult(build, Result.SUCCESS, 1);
-			assertBuildResult(test, Result.SUCCESS, 1);
-			assertBuildResult(test2, Result.FAILURE, 1);
-
-			Assert.assertFalse(deployScriptCalled);
-			Assert.assertFalse(wf.getLastBuild().isCompleted());
-			
-			Assert.assertEquals(1, wf.getLastBuild().getHumanTasks().size());
-			HumanTask humanTask = wf.getLastBuild().getHumanTasks().get(0);
-			
-			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
-			
-			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
-			form.submit((HtmlButton) form.getFirstByXPath("//button"));
-			
-			Thread.sleep(500);
-			
-			Assert.assertFalse(deployScriptCalled);
-			
-			Assert.assertTrue(wf.getLastBuild().isCompleted());
-			
-		} finally {
-			System.out.println(wf.getLastBuild().getLog());
-		}
-
-	}
 }

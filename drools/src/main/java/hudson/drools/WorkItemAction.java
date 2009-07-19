@@ -28,8 +28,10 @@ public class WorkItemAction extends ParametersAction {
 			.getName());
 
 	private final long workItemId;
-	private final long processInstanceId;
 	private final String projectName;
+
+	// backward compatibility
+	private final long processInstanceId;
 
 	private Run<?, ?> run;
 
@@ -195,15 +197,10 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public DroolsRun getDroolsRun() {
-		for (DroolsProject project : Hudson.getInstance().getItems(
-				DroolsProject.class)) {
-			for (DroolsRun run : project.getBuilds()) {
-				if (run.getProcessInstanceId() == processInstanceId) {
-					return run;
-				}
-			}
-		}
-		return null;
+		DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
+				droolsProjectName);
+		
+		return p != null ? p.getFromProcessInstance(processInstanceId) : null;
 	}
 
 	public static Run findRun(Job<?, ?> project, long processInstanceId) {

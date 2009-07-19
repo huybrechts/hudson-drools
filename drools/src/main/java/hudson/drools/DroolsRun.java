@@ -76,6 +76,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		}
 	}
 
+	// needs to be an int to please Stapler
 	public HumanTask getHumanTask(int workItemId) {
 		for (HumanTask task : humanTasks) {
 			if (workItemId == task.getWorkItemId()) {
@@ -162,6 +163,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public void doProcessInstanceImage(StaplerRequest req, StaplerResponse rsp)
 			throws IOException, XPathExpressionException, DocumentException {
 		ServletOutputStream output = rsp.getOutputStream();
+		rsp.setContentType("image/png");
 		getRuleFlowRenderer().write(output);
 		output.flush();
 		output.close();
