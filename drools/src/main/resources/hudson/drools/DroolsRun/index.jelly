@@ -39,7 +39,6 @@
 					<st:include it="${execution}" page="index.jelly" />
 				</j:forEach>
 			</j:if>
-
 			<MAP NAME="map">
 				<j:forEach var="node" items="${it.ruleFlowRenderer.nodes}">
 					<j:if test="${node.url != null}">

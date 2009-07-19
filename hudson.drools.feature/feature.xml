@@ -798,11 +798,13 @@ copy of the Program in return for a fee.
 
    <url>
       <update label="Hudson-Drools Update Site" url="https://svn.dev.java.net/svn/hudson/trunk/hudson/plugins/drools/hudson.drools.updatesite"/>
-      <discovery label="Drools" url="http://downloads.jboss.com/drools/updatesite3.4/"/>
    </url>
 
    <requires>
       <import feature="org.drools.eclipse.feature" version="5.0.1"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.core.resources"/>
    </requires>
 
    <plugin

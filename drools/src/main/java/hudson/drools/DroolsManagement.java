@@ -8,6 +8,7 @@ import hudson.model.Descriptor.FormException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -20,7 +21,7 @@ import org.kohsuke.stapler.StaplerResponse;
 @Extension
 public class DroolsManagement extends ManagementLink {
 
-	private List<Script> scripts;
+	private List<Script> scripts = new ArrayList<Script>();
 
 	public DroolsManagement() {
 		try {

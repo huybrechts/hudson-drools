@@ -141,8 +141,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			marshaller = MarshallerFactory.newMarshaller(kbase);
 
 			if (processXML != null) {
-				String processId = updateProcess(processXML);
-				setProcessId(processId);
+				updateProcess(processXML);
 			}
 
 			session = createSession();
@@ -192,8 +191,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 		JSONObject form = req.getSubmittedForm();
 		String processXML = form.getString("processXML");
-		processId = updateProcess(processXML);
-		this.processXML = processXML;
+		updateProcess(processXML);
 
 		triggerSpec = form.getString("triggerSpec");
 		if (!StringUtils.isEmpty(triggerSpec)) {
@@ -206,6 +204,8 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			tabs = null;
 			this.triggerSpec = null;
 		}
+		
+		session = createSession();
 
 		super.doConfigSubmit(req, rsp);
 	}
@@ -350,8 +350,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		}
 
 		String processXML = IOUtils.toString(request.getInputStream());
-		processId = updateProcess(processXML);
-		this.processXML = processXML;
+		updateProcess(processXML);
 
 		save();
 	}
@@ -444,11 +443,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	private transient KnowledgeBase kbase;
 	private transient Marshaller marshaller;
 
-	public String updateProcess(final String processXML) {
+	public void updateProcess(final String processXML) {
 		try {
-			return run(new Callable<String>() {
+			run(new Callable<Void>() {
 
-				public String call() throws Exception {
+				public Void call() throws Exception {
 					KnowledgeBuilder kbuilder = KnowledgeBuilderFactory
 							.newKnowledgeBuilder(new PackageBuilderConfiguration());
 					kbuilder.add(new ReaderResource(
@@ -479,7 +478,10 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 					kbase.addKnowledgePackages(knowledgePackages);
 
-					return processId;
+					DroolsProject.this.processId = processId;
+					DroolsProject.this.processXML = processXML;
+					
+					return null;
 				}
 
 			});

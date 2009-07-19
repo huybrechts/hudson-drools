@@ -135,14 +135,17 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 				hudson.model.Run.RunnerAbortedException {
 
 			ProcessInstance instance = getParent().run(
-					new StartProcessCallable(DroolsRun.this, getParent().getProcessId()));
+					new StartProcessCallable(DroolsRun.this, getParent()
+							.getProcessId()));
 
-			if (instance != null
-					&& instance.getState() != ProcessInstance.STATE_ABORTED) {
-				return Result.SUCCESS;
-			} else {
-				return Result.FAILURE;
+			if (instance != null) {
+				processInstanceId = instance.getId();
+				if (instance.getState() != ProcessInstance.STATE_ABORTED) {
+					return Result.SUCCESS;
+				}
 			}
+
+			return Result.FAILURE;
 		}
 
 	}
@@ -264,8 +267,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		checkPermission(Job.BUILD);
 
 		try {
-			getParent().run(
-					new CancelProcessCallable(processInstanceId));
+			getParent().run(new CancelProcessCallable(processInstanceId));
 		} catch (Exception e) {
 			throw new ServletException(
 					"Error while canceling process instance #"

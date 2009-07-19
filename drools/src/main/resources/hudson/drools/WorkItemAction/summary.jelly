@@ -15,10 +15,10 @@
 			</j:otherwise>
 		</j:choose>
 		<j:if test="${allowRestart}">
-			<a href="${rootURL}/${it.url}/restart">Restart</a>
+			<a id="drools_restart" href="${rootURL}/${it.url}/restart">Restart</a>
 		</j:if>
 		<j:if test="${allowComplete}">
-			or <a href="${rootURL}/${it.url}/complete">Accept</a>
+			or <a id="drools_accept" href="${rootURL}/${it.url}/complete">Accept</a>
 		</j:if>
 		<j:if test="${allowRestart || allowComplete}">.</j:if>
 	</t:summary>

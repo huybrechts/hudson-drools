@@ -6,20 +6,6 @@
 			<form action="submit" method="post">
 				<table>
 
-					<f:section title="Database Connection">
-						<j:set var="dbSettings" value="${it.getDBSettingsDescriptors()}" />
-						<j:forEach var="idx" begin="0" end="${size(dbSettings)-1}">
-							<j:set var="descriptor" value="${dbSettings[idx]}" />
-							<f:radioBlock name="dbSettings" value="${idx}"
-								title="${descriptor.displayName}" checked="${it.dbSettings.descriptor==descriptor}">
-								<j:set var="instance"
-									value="${it.dbSettings.descriptor==descriptor ? it.dbSettings : null}" />
-								<st:include from="${descriptor}" it="${instance}" optional="true"
-									page="index.jelly" />
-							</f:radioBlock>
-						</j:forEach>
-					</f:section>
-
 					<f:section title="Scripts">
 						<f:entry title="Scripts">
 							<f:repeatable name="scripts" var="script" items="${it.scripts}"

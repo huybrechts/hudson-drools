@@ -17,7 +17,7 @@
 			<j:otherwise>
 				<tr>
 					<td>
-						<f:form method="post" action="humanTask/${it.workItemId}/submit">
+						<f:form name="drools-humanTask-${it.workItemId}" method="post" action="humanTask/${it.workItemId}/submit">
 							<j:forEach var="parameterDefinition" items="${it.parameterDefinitions}">
 								<st:include it="${parameterDefinition}"
 									page="${parameterDefinition.descriptor.valuePage}" />
