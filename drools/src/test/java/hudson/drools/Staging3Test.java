@@ -51,7 +51,7 @@ public class Staging3Test extends DroolsTestCase {
 				});
 	}
 
-	public void xtestWorkflowWithTestSuccess() throws Exception {
+	public void testWorkflowWithTestSuccess() throws Exception {
 		wf.scheduleBuild(0);
 
 		try {

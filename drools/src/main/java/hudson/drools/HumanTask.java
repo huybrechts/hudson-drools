@@ -29,10 +29,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.framework.io.IOException2;
 
-public class HumanTask extends AbstractModelObject implements Serializable,
-		AccessControlled {
-
-	private static final long serialVersionUID = 4611515699313881698L;
+public class HumanTask extends AbstractModelObject implements AccessControlled {
 
 	private final List<ParameterDefinition> parameterDefinitions = new ArrayList<ParameterDefinition>();
 	private final String displayName;
@@ -74,9 +71,6 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 			String name = jo.getString("name");
 
 			ParameterDefinition d = getParameterDefinition(name);
-			if (d == null)
-				throw new IllegalArgumentException(
-						"No such parameter definition: " + name);
 			values.add(d.createValue(req, jo));
 		}
 
@@ -227,5 +221,5 @@ public class HumanTask extends AbstractModelObject implements Serializable,
 	public boolean hasPermission(Permission permission) {
 		return getACL().hasPermission(permission);
 	}
-	
+
 }

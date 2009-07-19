@@ -43,7 +43,7 @@ public class HumanTaskBuilder extends BuilderSupport {
 			String title = (String) attributes.get("title").toString();
 			return task = new HumanTask((String) title, privateTask);
 		}
-		Object type = attributes.get("type");
+		Object type = (String) attributes.get("type");
 		if (!validTypes.contains(type)) {
 			throw new IllegalArgumentException(type + " is not a valid type "
 					+ validTypes);

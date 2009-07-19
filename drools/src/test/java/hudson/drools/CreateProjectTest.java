@@ -19,15 +19,18 @@ import com.gargoylesoftware.htmlunit.html.SubmittableElement;
 
 public class CreateProjectTest extends HudsonTestCase {
 
-	public void testCreate() throws IOException {
+	public void testCreate() throws Exception {
         DroolsProject project = hudson.createProject(DroolsProject.class, "test-" + hudson.getItems().size() );
         project.onLoad(Hudson.getInstance(),project.getName());
         String processXML = IOUtils.toString(getClass().getResourceAsStream("staging-1.rf"));
         
         project.updateProcess(processXML);
+
+		project.delete();
+		Assert.assertNull(hudson.getItem(project.getName()));
 	}
 	
-	public void testCreateViaBrowser() throws IOException, SAXException {
+	public void testCreateViaBrowser() throws Exception {
 		HtmlPage createProjectPage = new WebClient().goTo("/newJob");
 		HtmlForm form = (HtmlForm) createProjectPage.getFirstByXPath("//form[@action='createItem']");
 		((HtmlTextInput) form.getInputByName("name")).type("project name");
@@ -36,8 +39,6 @@ public class CreateProjectTest extends HudsonTestCase {
 		
 		HtmlButton button = (HtmlButton) form.getFirstByXPath("//button");
 		HtmlPage projectPage = (HtmlPage) form.submit(button);
-		
-		System.out.println(projectPage.getTitleText());
 		
 		DroolsProject project = (DroolsProject) hudson.getItem("project name");
 		Assert.assertNotNull("no project created", project);
@@ -58,6 +59,9 @@ public class CreateProjectTest extends HudsonTestCase {
 		Assert.assertNotNull(project.getSession());
 		Assert.assertFalse(project.isDisabled());
 		Assert.assertEquals(description, project.getDescription());
+		
+		project.delete();
+		Assert.assertNull(hudson.getItem(project.getName()));
 		
 	}
 	

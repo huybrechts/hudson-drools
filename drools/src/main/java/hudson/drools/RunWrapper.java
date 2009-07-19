@@ -61,15 +61,6 @@ public class RunWrapper implements Externalizable {
 		return run != null ? run.getFullDisplayName() : "";
 	}
 
-	private String getParameter(ParametersAction parameters, String name) {
-		for (ParameterValue value : parameters.getParameters()) {
-			if (name.equals(value.getName())) {
-				return ((StringParameterValue) value).value;
-			}
-		}
-		return null;
-	}
-
 	@Override
 	public int hashCode() {
 		return run.hashCode();

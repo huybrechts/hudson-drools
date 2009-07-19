@@ -122,27 +122,26 @@ public class WorkItemAction extends ParametersAction {
 
 	public void doRestart(StaplerRequest req, StaplerResponse rsp)
 			throws ServletException, IOException {
-		run.checkPermission(Job.BUILD);
-
 		if (run != null && run.getResult().isWorseOrEqualTo(Result.UNSTABLE)) {
+			run.checkPermission(Job.BUILD);
 			new WorkItemAction(droolsProjectName, workItemId,
 					processInstanceId, projectName, completeWhenFailed,
 					completeWhenUnstable, getParameters()).scheduleBuild();
+			rsp.forwardToPreviousPage(req);
 		} else {
 			throw new IllegalArgumentException(
 					"Cannot restart a build that did not fail.");
 		}
-
-		rsp.forwardToPreviousPage(req);
 	}
 
 	public void doComplete(StaplerRequest req, StaplerResponse rsp)
 			throws ServletException, IOException {
-		run.checkPermission(Job.BUILD);
 		if (run == null) {
 			throw new IllegalArgumentException(
 					"Cannot complete before the build is done");
 		}
+		
+		run.checkPermission(Job.BUILD);
 
 		complete();
 
@@ -166,10 +165,6 @@ public class WorkItemAction extends ParametersAction {
 
 	public Run<?, ?> getRun() {
 		return run;
-	}
-
-	public void setRun(Run<?, ?> run) {
-		this.run = run;
 	}
 
 	public boolean isAllowRestart() {

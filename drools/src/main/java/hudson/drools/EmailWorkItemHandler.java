@@ -29,14 +29,14 @@ public class EmailWorkItemHandler implements WorkItemHandler {
 			String replyTo = (String) workItem.getParameter("Reply-To");
 
 			String from = (String) workItem.getParameter("From");
-			if (from == null) from = Mailer.descriptor().getAdminAddress();
+			if (from == null)
+				from = Mailer.descriptor().getAdminAddress();
 
 			Message message = new MimeMessage(Mailer.descriptor()
 					.createSession());
 			message.setFrom(createAddress(from));
 			if (replyTo != null) {
-				message
-						.setReplyTo(new Address[] { createAddress(replyTo) });
+				message.setReplyTo(new Address[] { createAddress(replyTo) });
 			}
 			for (String r : recipients.split(",")) {
 				message.addRecipient(RecipientType.TO, createAddress(r));
@@ -59,12 +59,12 @@ public class EmailWorkItemHandler implements WorkItemHandler {
 
 		manager.completeWorkItem(workItem.getId(), null);
 	}
-	
+
 	private Address createAddress(String id) throws AddressException {
-		User user =User.get(id, false);
+		User user = User.get(id, false);
 		if (user != null) {
 			String address = MailAddressResolver.resolve(user);
-			if (user != null) {
+			if (address != null) {
 				return new InternetAddress(address);
 			}
 		}

@@ -315,7 +315,6 @@ public class RuleFlowRenderer {
 		public final int x, y, width, height;
 
 		public NodeState state = NodeState.INACTIVE;
-		private String url;
 
 		public RFNode(String type, String name, String id, int x, int y,
 				int width, int height) {
@@ -330,7 +329,7 @@ public class RuleFlowRenderer {
 		}
 
 		public String getUrl() {
-			return url;
+			return null;
 		}
 
 		public Rectangle2D.Double asRectangle() {
