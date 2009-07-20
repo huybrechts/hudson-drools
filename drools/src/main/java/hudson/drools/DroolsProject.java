@@ -548,6 +548,9 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 	public void dispose() {
 		session.dispose();
+		for (DroolsRun run: getBuilds()) {
+			run.dispose();
+		}
 	}
 
 	public StatefulKnowledgeSession getSession() {

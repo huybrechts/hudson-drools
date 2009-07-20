@@ -282,4 +282,8 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		rsp.sendRedirect2(req.getContextPath() + '/' + getUrl());
 	}
 
+	public void dispose() {
+		if (logWriter != null) logWriter.close();
+	}
+
 }

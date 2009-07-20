@@ -48,5 +48,10 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 		wc.goTo(wf.getLastBuild().getUrl() + "/processInstanceImage",
 				"image/png");
 
+		waitForWorkflowComplete(wf, 1);
+
+		wc.goTo(wf.getLastBuild().getUrl() + "/processInstanceImage",
+				"image/png");
+
 	}
 }

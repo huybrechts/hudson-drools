@@ -44,24 +44,43 @@ public class ScriptTest extends DroolsTestCase {
 		Assert.assertTrue(build.getLog().contains("java.lang.Exception"));
 		Assert.assertTrue(build.isRunning());
 		Assert.assertEquals(1, build.getScriptExecutions().size());
-		ScriptExecution scriptExecution = build
-				.getScriptExecutions().get(0);
-		Assert.assertEquals(ScriptExecution.Result.FAILED, scriptExecution.getResult());
+		ScriptExecution scriptExecution = build.getScriptExecutions().get(0);
+		Assert.assertEquals(ScriptExecution.Result.FAILED, scriptExecution
+				.getResult());
 
 		HtmlPage page = new WebClient().goTo(build.getUrl());
-		HtmlAnchor anchor = (HtmlAnchor) page.getFirstByXPath("//a[@href='/"+scriptExecution.getUrl()+"/run']");
+		HtmlAnchor anchor = (HtmlAnchor) page.getFirstByXPath("//a[@href='/"
+				+ scriptExecution.getUrl() + "/run']");
 		Assert.assertNotNull(anchor);
 
 		DroolsManagement.getInstance().setScripts(new Script("script", ""));
-		
+
 		anchor.click();
 
 		waitForWorkflowComplete(project, 1);
-		
-		Assert.assertEquals(ScriptExecution.Result.COMPLETED, scriptExecution.getResult());
-		
+
+		Assert.assertEquals(ScriptExecution.Result.COMPLETED, scriptExecution
+				.getResult());
+
 		page = new WebClient().goTo(build.getUrl());
-		anchor = (HtmlAnchor) page.getFirstByXPath("//a[@href='/"+scriptExecution.getUrl()+"/run']");
+		anchor = (HtmlAnchor) page.getFirstByXPath("//a[@href='/"
+				+ scriptExecution.getUrl() + "/run']");
 		Assert.assertNull(anchor);
+	}
+
+	public void testScriptParameters() throws Exception {
+		StringBuilder source = new StringBuilder();
+		source.append("assert hudson != null\n");
+		source.append("assert session != null\n");
+		source.append("assert args != null\n");
+		source.append("assert out != null\n");
+		DroolsManagement.getInstance().setScripts(
+				new Script("script", source.toString()));
+
+		project.scheduleBuild();
+		waitForWorkflowComplete(project, 1);
+
+		Assert.assertEquals(ScriptExecution.Result.COMPLETED, project
+				.getLastBuild().getScriptExecutions().get(0).getResult());
 	}
 }
