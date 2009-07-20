@@ -9,6 +9,7 @@ import hudson.model.Descriptor.FormException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -67,9 +68,13 @@ public class DroolsManagement extends ManagementLink {
 	}
 
 	public void setScripts(List<Script> scripts) {
-		this.scripts = scripts;
+		this.scripts = new ArrayList<Script>(scripts);
 	}
 
+	public void setScripts(Script... scripts) {
+		this.scripts = new ArrayList<Script>(Arrays.asList(scripts));
+	}
+	
 	private File getConfigFile() {
 		return new File(Hudson.getInstance().getRootDir(), "drools.xml");
 	}

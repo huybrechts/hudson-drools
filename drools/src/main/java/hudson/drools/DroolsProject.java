@@ -398,6 +398,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public <T> T run(SessionCallable<T> callable) throws Exception {
+		synchronized(session) {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		Authentication auth = SecurityContextHolder.getContext()
 				.getAuthentication();
@@ -414,6 +415,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		} finally {
 			SecurityContextHolder.getContext().setAuthentication(auth);
 			Thread.currentThread().setContextClassLoader(cl);
+		}
 		}
 	}
 

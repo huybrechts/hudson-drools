@@ -16,6 +16,8 @@ public class SimpleProjectTest extends DroolsTestCase {
 
 		assertBuildResult(wf, Result.SUCCESS, 1);
 		assertBuildResult(project1, Result.SUCCESS, 1);
+		
+		waitForWorkflowComplete(wf, 1);
 
 	}
 }

@@ -53,7 +53,7 @@ public class Staging1Test extends DroolsTestCase {
 			assertBuildResult(build, Result.SUCCESS, 1);
 			assertBuildResult(test, Result.SUCCESS, 1);
 
-			Thread.sleep(200);
+			waitForWorkflowComplete(wf, 1);
 
 			Assert.assertTrue(deployScriptCalled);
 
