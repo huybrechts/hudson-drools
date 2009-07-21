@@ -30,7 +30,6 @@ public class DroolsProjectTest extends DroolsTestCase {
 		Assert.assertEquals(processXML, project.getProcessXML());
 		Assert.assertNotNull(project.getSession());
 		Assert.assertFalse(project.isDisabled());
-
 	}
 
 	public void testCreateViaBrowser() throws Exception {

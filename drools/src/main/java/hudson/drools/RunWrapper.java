@@ -88,14 +88,14 @@ public class RunWrapper implements Externalizable {
 		run = stringToRun(s);
 	}
 	
-	private static String runToString(Run run) {
+	public static String runToString(Run run) {
 		if (run == null) return "";
 		Job<?, ?> job = run.getParent();
 		String convertedValue = job.getName() + "#" + run.getNumber();
 		return convertedValue;
 	}
 
-	private static Run stringToRun(String id) {
+	public static Run stringToRun(String id) {
 		if ("".equals(id)) return null;
 		
 		int hash = id.lastIndexOf('#');

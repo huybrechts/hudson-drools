@@ -269,7 +269,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		checkPermission(Job.BUILD);
 
 		try {
-			getParent().run(new CancelProcessCallable(processInstanceId));
+			cancel();
 		} catch (Exception e) {
 			throw new ServletException(
 					"Error while canceling process instance #"
@@ -280,6 +280,10 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		setStatus(Status.ABORTED);
 
 		rsp.sendRedirect2(req.getContextPath() + '/' + getUrl());
+	}
+
+	public void cancel() throws Exception {
+		getParent().run(new CancelProcessCallable(processInstanceId));
 	}
 
 	public void dispose() {

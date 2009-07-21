@@ -7,6 +7,24 @@
 			value="${it.triggerSpec}" />
 	</f:entry>
 
+	<f:entry title="Scripts">
+		<f:repeatable name="scripts" var="script" items="${it.scripts}">
+			<table width="100%">
+				<f:entry title="ID">
+					<f:textbox name="id" value="${script.id}" />
+				</f:entry>
+				<f:entry title="Source">
+					<f:textarea name="source" value="${script.source}" />
+				</f:entry>
+				<f:entry>
+					<div align="right">
+						<f:repeatableDeleteButton />
+					</div>
+				</f:entry>
+			</table>
+		</f:repeatable>
+	</f:entry>
+
 	<f:entry title="Process Definition">
 		<f:textarea name="processXML" value="${it.processXML}" />
 	</f:entry>

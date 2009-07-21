@@ -30,10 +30,9 @@ public abstract class DroolsTestCase extends HudsonTestCase {
 			throws IOException {
 		DroolsProject result = hudson.createProject(DroolsProject.class,
 				projectName);
-		result.onLoad(Hudson.getInstance(), result.getName());
 		String processXML = IOUtils.toString(getClass().getResourceAsStream(
 				resource));
-		result.updateProcess(processXML);
+		result.set(null, processXML, null);
 
 		return result;
 

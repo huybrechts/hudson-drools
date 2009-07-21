@@ -4,9 +4,6 @@ import org.drools.runtime.process.WorkItem;
 import org.drools.runtime.process.WorkItemHandler;
 import org.drools.runtime.process.WorkItemManager;
 
-/**
- * @TODO a way to to manually restart scripts when they fail
- */
 public class ScriptHandler implements WorkItemHandler {
 	
 	private final DroolsProject project;

@@ -68,8 +68,8 @@ public class ScriptExecution {
 	}
 
 	public void run() {
-		final Script script = DroolsManagement.getInstance().getScript(
-				scriptName);
+		
+		final Script script = run.getParent().getScript(scriptName); 
 		if (script == null) {
 			throw new IllegalArgumentException("Unknown script " + scriptName);
 		}
@@ -81,7 +81,7 @@ public class ScriptExecution {
 				result = Result.RUNNING;
 
 				try {
-					StatefulKnowledgeSession session = run.getParent().getSession();
+					StatefulKnowledgeSession session = run.getParent().getSession().getSession();
 					Map<String, Object> scriptResults = script.execute(session, run
 							.getLogWriter(), parameters);
 					result = Result.COMPLETED;

@@ -20,24 +20,15 @@ import hudson.model.Cause.UserCause;
 import hudson.model.Queue.Executable;
 import hudson.model.RunMap.Constructor;
 import hudson.scheduler.CronTabList;
-import hudson.security.ACL;
 import hudson.security.AuthorizationMatrixProperty;
-import hudson.util.IOException2;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
-import java.util.concurrent.Callable;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -46,30 +37,10 @@ import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.json.JSONObject;
 
-import org.acegisecurity.Authentication;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.DocumentException;
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseFactory;
-import org.drools.SessionConfiguration;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderError;
-import org.drools.builder.KnowledgeBuilderErrors;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.compiler.PackageBuilderConfiguration;
-import org.drools.definition.KnowledgePackage;
-import org.drools.definition.process.Process;
-import org.drools.impl.EnvironmentFactory;
-import org.drools.io.impl.ReaderResource;
 import org.drools.logger.KnowledgeRuntimeLoggerFactory;
-import org.drools.marshalling.Marshaller;
-import org.drools.marshalling.MarshallerFactory;
-import org.drools.runtime.Environment;
-import org.drools.runtime.KnowledgeSessionConfiguration;
-import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkItemManager;
 import org.kohsuke.stapler.StaplerRequest;
@@ -82,11 +53,14 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		TopLevelItem, hudson.model.Queue.Task, BuildableItem {
 
 	private boolean disabled;
-	private transient String processId;
 	private String processXML;
+
+	private transient DroolsSession session;
 
 	private String triggerSpec;
 	private transient CronTabList tabs;
+
+	private List<Script> scripts = new ArrayList<Script>();
 
 	/**
 	 * All the builds keyed by their build number.
@@ -125,33 +99,61 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 				return newBuild;
 			}
 		});
-		if (triggerSpec != null) {
-			try {
-				tabs = CronTabList.create(triggerSpec);
-			} catch (ANTLRException e) {
-				e.printStackTrace();
-			}
+
+		try {
+			set(triggerSpec, processXML, scripts);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
+	}
+
+	void set(String triggerSpec, String processXML, List<Script> scripts)
+			throws IOException {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		Thread.currentThread().setContextClassLoader(
 				PluginImpl.class.getClassLoader());
 		try {
-			kbase = KnowledgeBaseFactory.newKnowledgeBase();
-			marshaller = MarshallerFactory.newMarshaller(kbase);
+			DroolsSession session = processXML != null ? new DroolsSession(
+					new File(getRootDir(), "session.ser"), processXML) : null;
 
-			if (processXML != null) {
-				updateProcess(processXML);
-				session = createSession();
+			CronTabList tabs = null;
+			if (!StringUtils.isEmpty(triggerSpec)) {
+				try {
+					tabs = CronTabList.create(triggerSpec);
+				} catch (ANTLRException e) {
+					e.printStackTrace();
+				}
+			} else {
+				tabs = null;
+				triggerSpec = null;
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+			// all is well -- let's commit
+			this.processXML = processXML;
+			this.session = session;
+			this.triggerSpec = triggerSpec;
+			this.tabs = tabs;
+			this.scripts = scripts != null ? scripts : new ArrayList<Script>();
+
+			WorkItemManager workItemManager = session.getSession()
+					.getWorkItemManager();
+			workItemManager.registerWorkItemHandler("Build",
+					new BuildWorkItemHandler(this));
+			workItemManager.registerWorkItemHandler("Human Task",
+					new HumanTaskHandler(this));
+			workItemManager.registerWorkItemHandler("Script",
+					new ScriptHandler(this));
+			workItemManager.registerWorkItemHandler("E-Mail",
+					new EmailWorkItemHandler());
+
+			KnowledgeRuntimeLoggerFactory
+					.newConsoleLogger(session.getSession());
+			new WorkingMemoryHudsonLogger(session.getSession(), this);
+
 		} finally {
 			Thread.currentThread().setContextClassLoader(cl);
 		}
-		;
-
 	}
 
 	@Extension
@@ -170,7 +172,8 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public DescriptorImpl getDescriptor() {
-		return (DescriptorImpl) Hudson.getInstance().getDescriptor(DroolsProject.class);
+		return (DescriptorImpl) Hudson.getInstance().getDescriptor(
+				DroolsProject.class);
 	}
 
 	@Override
@@ -185,21 +188,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 		JSONObject form = req.getSubmittedForm();
 		String processXML = form.getString("processXML");
-		updateProcess(processXML);
+		String triggerSpec = form.getString("triggerSpec");
+		List<Script> scripts = req.bindJSONToList(Script.class, form
+				.get("scripts"));
 
-		triggerSpec = form.getString("triggerSpec");
-		if (!StringUtils.isEmpty(triggerSpec)) {
-			try {
-				tabs = CronTabList.create(triggerSpec);
-			} catch (ANTLRException e) {
-				e.printStackTrace();
-			}
-		} else {
-			tabs = null;
-			this.triggerSpec = null;
-		}
-		
-		session = createSession();
+		set(triggerSpec, processXML, scripts);
 
 		super.doConfigSubmit(req, rsp);
 	}
@@ -278,7 +271,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public String getProcessId() {
-		return processId;
+		return session.getProcessId();
 	}
 
 	private transient WeakReference<RuleFlowRenderer> renderer;
@@ -298,10 +291,6 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		getRuleFlowRenderer().write(output);
 		output.flush();
 		output.close();
-	}
-
-	public void setProcessId(String processId) {
-		this.processId = processId;
 	}
 
 	@Exported
@@ -345,14 +334,15 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		}
 
 		String processXML = IOUtils.toString(request.getInputStream());
-		updateProcess(processXML);
+		set(triggerSpec, processXML, scripts);
 
 		save();
 	}
 
 	@Override
 	protected void performDelete() throws IOException, InterruptedException {
-		if (session != null) session.dispose();
+		if (session != null)
+			session.dispose();
 		super.performDelete();
 	}
 
@@ -381,8 +371,8 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	 */
 	public DroolsRun getFromProcessInstance(long processInstanceId) {
 		DroolsRun result = null;
-		ProcessInstance processInstance = getSession().getProcessInstance(
-				processInstanceId);
+		ProcessInstance processInstance = session.getSession()
+				.getProcessInstance(processInstanceId);
 		if (processInstance != null) {
 			result = DroolsRun.getFromProcessInstance(processInstance);
 		}
@@ -398,162 +388,38 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public <T> T run(SessionCallable<T> callable) throws Exception {
-		synchronized(session) {
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Authentication auth = SecurityContextHolder.getContext()
-				.getAuthentication();
-		try {
-			SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-			Thread.currentThread().setContextClassLoader(
-					getClass().getClassLoader());
-
-			T result = callable.call(session);
-
-			saveSession();
-
-			return result;
-		} finally {
-			SecurityContextHolder.getContext().setAuthentication(auth);
-			Thread.currentThread().setContextClassLoader(cl);
-		}
-		}
-	}
-
-	public static <T> T run(Callable<T> callable) throws Exception {
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Authentication auth = SecurityContextHolder.getContext()
-				.getAuthentication();
-		try {
-			SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-			Thread.currentThread().setContextClassLoader(
-					PluginImpl.class.getClassLoader());
-
-			T result = callable.call();
-
-			return result;
-		} finally {
-			SecurityContextHolder.getContext().setAuthentication(auth);
-			Thread.currentThread().setContextClassLoader(cl);
-		}
-	}
-
-	private transient StatefulKnowledgeSession session;
-	private transient KnowledgeBase kbase;
-	private transient Marshaller marshaller;
-
-	public void updateProcess(final String processXML) {
-		try {
-			run(new Callable<Void>() {
-
-				public Void call() throws Exception {
-					KnowledgeBuilder kbuilder = KnowledgeBuilderFactory
-							.newKnowledgeBuilder(new PackageBuilderConfiguration());
-					kbuilder.add(new ReaderResource(
-							new StringReader(processXML)), ResourceType.DRF);
-					KnowledgeBuilderErrors errors = kbuilder.getErrors();
-					StringBuilder sb = new StringBuilder();
-					if (errors.size() > 0) {
-						setDisabled(true);
-						
-						for (KnowledgeBuilderError error : errors) {
-							sb.append(error.getMessage()).append("\n");
-						}
-						
-						throw new IllegalArgumentException(
-								"Could not parse knowledge:\n" + sb);
-					}
-
-					Collection<KnowledgePackage> knowledgePackages = kbuilder
-							.getKnowledgePackages();
-
-					Process process = knowledgePackages.iterator().next()
-							.getProcesses().iterator().next();
-
-					String processId = process.getId();
-
-					if (kbase == null) {
-						kbase = KnowledgeBaseFactory.newKnowledgeBase();
-						marshaller = MarshallerFactory.newMarshaller(kbase);
-					}
-
-					kbase.addKnowledgePackages(knowledgePackages);
-
-					DroolsProject.this.processId = processId;
-					DroolsProject.this.processXML = processXML;
-					
-					session = createSession();
-					
-					return null;
-				}
-
-			});
-		} catch (IllegalArgumentException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException("Unexpected exception", e);
-		}
-	}
-
-	private StatefulKnowledgeSession createSession() throws IOException {
-		KnowledgeSessionConfiguration conf = new SessionConfiguration();
-		Environment env = EnvironmentFactory.newEnvironment();
-		File f = new File(getRootDir(), "session.ser");
-		StatefulKnowledgeSession ksession = null;
-		if (!f.exists() || f.length() == 0) {
-			ksession = kbase.newStatefulKnowledgeSession(conf, env);
-		} else {
-			InputStream is = null;
-			try {
-				is = new FileInputStream(f);
-				ksession = marshaller.unmarshall(is);
-			} catch (ClassNotFoundException e) {
-				throw new IOException2("Class not found while unmarshalling "
-						+ f.getAbsolutePath(), e);
-			} catch (IOException e) {
-				throw new IOException2("Error while unmarshalling "
-						+ f.getAbsolutePath(), e);
-			} finally {
-				is.close();
-			}
-		}
-
-		WorkItemManager workItemManager = ksession.getWorkItemManager();
-		workItemManager.registerWorkItemHandler("Build",
-				new BuildWorkItemHandler(this));
-		workItemManager.registerWorkItemHandler("Human Task",
-				new HumanTaskHandler(this));
-		workItemManager.registerWorkItemHandler("Script", new ScriptHandler(
-				this));
-		workItemManager.registerWorkItemHandler("E-Mail",
-				new EmailWorkItemHandler());
-
-		KnowledgeRuntimeLoggerFactory.newConsoleLogger(ksession);
-		new WorkingMemoryHudsonLogger(ksession, this);
-
-		return ksession;
-	}
-
-	public void saveSession() throws IOException {
-		if (session != null) {
-			OutputStream os = null;
-			try {
-				os = new FileOutputStream(new File(this.getRootDir(),
-						"session.ser"));
-				marshaller.marshall(os, session);
-			} finally {
-				os.close();
-			}
-		}
+		return session.run(callable);
 	}
 
 	public void dispose() {
 		session.dispose();
-		for (DroolsRun run: getBuilds()) {
+		for (DroolsRun run : getBuilds()) {
 			run.dispose();
 		}
 	}
 
-	public StatefulKnowledgeSession getSession() {
+	public List<Script> getScripts() {
+		return scripts;
+	}
+
+	public void setScripts(List<Script> scripts) {
+		this.scripts = new ArrayList<Script>(scripts);
+	}
+
+	public void setScripts(Script... scripts) {
+		this.scripts = new ArrayList<Script>(Arrays.asList(scripts));
+	}
+
+	public Script getScript(String scriptName) {
+		for (Script script : scripts) {
+			if (script.getId().equals(scriptName)) {
+				return script;
+			}
+		}
+		return DroolsManagement.getInstance().getScript(scriptName);
+	}
+
+	public DroolsSession getSession() {
 		return session;
 	}
 

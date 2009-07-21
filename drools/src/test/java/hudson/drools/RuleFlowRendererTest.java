@@ -1,10 +1,5 @@
 package hudson.drools;
 
-import java.io.PrintWriter;
-import java.util.Map;
-
-import org.drools.runtime.StatefulKnowledgeSession;
-
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 
@@ -52,6 +47,29 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 
 		wc.goTo(wf.getLastBuild().getUrl() + "/processInstanceImage",
 				"image/png");
+
+	}
+
+	public void testWorkflow3() throws Exception {
+		DroolsProject wf = createProject("release-vote", "release-vote.rf");
+
+		FreeStyleProject build = hudson.createProject(FreeStyleProject.class,
+				"Build");
+
+		DroolsManagement.getInstance().getScripts().add(
+				new Script("DeployStagedRelease", ""));
+
+		WebClient wc = new WebClient();
+		wc.goTo(wf.getUrl() + "/processImage", "image/png");
+		
+		wf.scheduleBuild(0);
+		
+		assertBuildResult(wf, Result.SUCCESS, 1);
+		
+		wc.goTo(wf.getLastBuild().getUrl() + "/processInstanceImage",
+				"image/png");
+		
+		wf.getLastBuild().cancel();
 
 	}
 }
