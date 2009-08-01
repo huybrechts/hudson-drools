@@ -43,6 +43,7 @@ import org.dom4j.DocumentException;
 import org.drools.logger.KnowledgeRuntimeLoggerFactory;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkItemManager;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
@@ -200,7 +201,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	/**
 	 * Schedules a new build command.
 	 */
-	public void doBuild(StaplerRequest req, StaplerResponse rsp)
+	public HttpResponse doBuild()
 			throws IOException, ServletException {
 		checkPermission(BUILD);
 
@@ -208,7 +209,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 		scheduleBuild(cause);
 
-		rsp.forwardToPreviousPage(req);
+		return new ForwardToPreviousPage();
 	}
 
 	public boolean scheduleBuild(Cause cause, Action... actions) {

@@ -10,8 +10,7 @@ import javax.servlet.ServletException;
 
 import org.acegisecurity.context.SecurityContextHolder;
 import org.drools.runtime.StatefulKnowledgeSession;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.HttpResponse;
 
 public class ScriptExecution {
 
@@ -105,13 +104,13 @@ public class ScriptExecution {
 		}).start();
 	}
 
-	public void doRun(StaplerRequest req, StaplerResponse rsp)
+	public HttpResponse doRun()
 			throws ServletException, IOException {
 		run.checkPermission(Job.BUILD);
 		
 		run();
 
-		rsp.forwardToPreviousPage(req);
+		return new ForwardToPreviousPage();
 	}
 
 	public String getUrl() {

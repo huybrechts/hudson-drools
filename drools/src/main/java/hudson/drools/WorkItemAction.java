@@ -19,8 +19,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.HttpResponse;
 
 public class WorkItemAction extends ParametersAction {
 
@@ -120,32 +119,30 @@ public class WorkItemAction extends ParametersAction {
 		}
 	}
 
-	public void doRestart(StaplerRequest req, StaplerResponse rsp)
-			throws ServletException, IOException {
+	public HttpResponse doRestart() throws ServletException, IOException {
 		if (run != null && run.getResult().isWorseOrEqualTo(Result.UNSTABLE)) {
 			run.checkPermission(Job.BUILD);
 			new WorkItemAction(droolsProjectName, workItemId,
 					processInstanceId, projectName, completeWhenFailed,
 					completeWhenUnstable, getParameters()).scheduleBuild();
-			rsp.forwardToPreviousPage(req);
+			return new ForwardToPreviousPage();
 		} else {
 			throw new IllegalArgumentException(
 					"Cannot restart a build that did not fail.");
 		}
 	}
 
-	public void doComplete(StaplerRequest req, StaplerResponse rsp)
-			throws ServletException, IOException {
+	public HttpResponse doComplete() throws ServletException, IOException {
 		if (run == null) {
 			throw new IllegalArgumentException(
 					"Cannot complete before the build is done");
 		}
-		
+
 		run.checkPermission(Job.BUILD);
 
 		complete();
 
-		rsp.forwardToPreviousPage(req);
+		return new ForwardToPreviousPage();
 	}
 
 	@Override
@@ -194,7 +191,7 @@ public class WorkItemAction extends ParametersAction {
 	public DroolsRun getDroolsRun() {
 		DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
 				droolsProjectName);
-		
+
 		return p != null ? p.getFromProcessInstance(processInstanceId) : null;
 	}
 

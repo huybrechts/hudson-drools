@@ -41,7 +41,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class Hudson {
-	
+
 	private String userName;
 	private String password;
 
@@ -51,12 +51,18 @@ public class Hudson {
 		this.userName = userName;
 		this.password = password;
 
-		Authenticator.setDefault(new Authenticator() {
+		Authenticator auth = new Authenticator() {
 			@Override
 			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(userName, password.toCharArray());
+				return new PasswordAuthentication(userName, password
+						.toCharArray());
 			}
-		});
+		};
+		if (userName != null && !"".equals(userName)) {
+			Authenticator.setDefault(auth);
+		} else {
+			Authenticator.setDefault(null);
+		}
 	}
 
 	private final String url;
@@ -68,29 +74,34 @@ public class Hudson {
 	public List<String> getWorkflowProjects() throws IOException {
 		URL u = new URL(url + "/plugin/drools/workflowProjects");
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
-		
+		conn.setRequestProperty("Authorization", "Basic "
+				+ Base64Converter.encode(userName + ":" + password));
+
 		List<String> result = new ArrayList<String>();
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String line =null;
+			reader = new BufferedReader(new InputStreamReader(conn
+					.getInputStream()));
+			String line = null;
 			while ((line = reader.readLine()) != null) {
 				result.add(line);
 			}
 		} finally {
-			if (reader != null) reader.close();
+			if (reader != null)
+				reader.close();
 		}
-		
+
 		return result;
-		
+
 	}
 
 	public void validateProject(String project) throws IOException,
 			NoSuchProjectException, NotADroolsProjectException {
-		URL u = new URL(url + "/job/" + project.replace(" ", "%20") + "/api/xml"); // bad, I know
+		URL u = new URL(url + "/job/" + project.replace(" ", "%20")
+				+ "/api/xml"); // bad, I know
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
+		conn.setRequestProperty("Authorization", "Basic "
+				+ Base64Converter.encode(userName + ":" + password));
 
 		String xml = Util.read(conn.getInputStream());
 
@@ -121,7 +132,8 @@ public class Hudson {
 			CoreException, NoSuchProjectException, NotADroolsProjectException {
 		validateProject(project);
 
-		URL u = new URL(url + "/job/" + project.replace(" ", "%20") + "/submitWorkflow");
+		URL u = new URL(url + "/job/" + project.replace(" ", "%20")
+				+ "/submitWorkflow");
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 		addAuthentication(conn, userName, password);
 		conn.setDoOutput(true);
@@ -144,10 +156,10 @@ public class Hudson {
 
 		String projectXml = createProjectXml(project, ruleFlowFile);
 
-		URL u = new URL(url + "/createItem?name="
-				+ project.replace(" ", "%20"));
+		URL u = new URL(url + "/createItem?name=" + project.replace(" ", "%20"));
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
+		conn.setRequestProperty("Authorization", "Basic "
+				+ Base64Converter.encode(userName + ":" + password));
 		conn.setUseCaches(false);
 		conn.setDoOutput(true);
 		conn.setDoInput(true);
@@ -201,7 +213,7 @@ public class Hudson {
 		try {
 			socket = new DatagramSocket();
 			socket.setSoTimeout(5000); // this is local, so 5000 is very long
-										// already...
+			// already...
 
 			// send request
 			byte[] buf = new byte[2048];
@@ -244,21 +256,27 @@ public class Hudson {
 		} catch (Exception e) {
 			return false;
 		}
-		
+
 	}
-	
-	private void addAuthentication(HttpURLConnection conn, String userName, String password) {
-		if (userName != null && password != null)
-		conn.setRequestProperty("Authorization", "Basic " + Base64Converter.encode(userName + ":" + password));
+
+	private void addAuthentication(HttpURLConnection conn, String userName,
+			String password) {
+		if (userName != null && password != null && !userName.equals(""))
+			conn.setRequestProperty("Authorization", "Basic "
+					+ Base64Converter.encode(userName + ":" + password));
 	}
-	
+
 	public static void main(String[] args) throws Exception {
-		HttpURLConnection conn = (HttpURLConnection) new URL("http://localhost:8080/job/Staging%20Workflow%203/api/xml").openConnection();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		String line =null;
-		while (( line = reader.readLine()) != null) System.out.println(line);
+		HttpURLConnection conn = (HttpURLConnection) new URL(
+				"http://localhost:8080/job/Staging%20Workflow%203/api/xml")
+				.openConnection();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(conn
+				.getInputStream()));
+		String line = null;
+		while ((line = reader.readLine()) != null)
+			System.out.println(line);
 		System.out.println(conn.getResponseCode());
-		
+
 		// 401 = bad username or password
 		// 403 = authentication required
 	}

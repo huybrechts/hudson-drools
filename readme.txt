@@ -5,42 +5,27 @@ TODO
 - task assignment
 - security (partially completed -- need to disable links in jelly)
 - show task only to assigned users (boolean available, need to adapt jelly)
-- update site for eclipse plugin (done, find some place to host it)
 - documentation
+- BIG BUG: Suppose a build a build is queued by a workflow, and then
+Hudson is killed. When Hudson is restarted, the build is lost and process is stuck. 
+Hudson only persists the queue on a clean shutdown.
 
 idea: continue/stop workflow if certain tests have failed
 
-
 postpone
 --------
-- warn when multiple processes have the same id
 - svg workflow image
 - eclipse plugin: remember project per .rf
-- icon rendering 
-
-
+- icon rendering (not ready on first load)
 
 Examples
 --------
 - staging workflow
 
-Done
-----
-- eclipse or maven submit plugin
-- don't show questions for canceled process
-- log when process instance is not started correctly (set state to aborted or failed)
-- confirmation for cancel, delete
-- a groovy builder for questions
-- deploy dialog: after navigating away from url, project value is overwritten
-- undeploy package when deleting project
-- abortWorkItem on human task
-
-
 Required: 
 - Eclipse 3.5
 - Drools Workbench (update site: http://downloads.jboss.com/drools/updatesite3.4/)
 - Hudson extension for Drools Workbench (update site: https://svn.dev.java.net/svn/hudson/trunk/hudson/plugins/drools/hudson.drools.updatesite, user:guest, password:none)
- 
 
 - put this pom in a new directory
 
@@ -103,7 +88,7 @@ Required:
 
 - create a new 'RuleFlow file' in the project
 
-- you should see two Workitems bottom left called 'Script', 'Build' and 'E-Mail'
+- you should see three Workitems bottom left called 'Script', 'Build' and 'E-Mail'
 
 - Change the project properties. Set Package to MyFirstWorkflow and Id to MyFirstWorkflow
 

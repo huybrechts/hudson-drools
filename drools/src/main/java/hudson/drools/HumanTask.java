@@ -2,7 +2,6 @@ package hudson.drools;
 
 import hudson.model.AbstractModelObject;
 import hudson.model.BooleanParameterValue;
-import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -13,7 +12,6 @@ import hudson.security.AccessControlled;
 import hudson.security.Permission;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +23,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.AccessDeniedException;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.framework.io.IOException2;
@@ -59,7 +58,7 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 		this.privateTask = privateTask;
 	}
 
-	public void doSubmit(StaplerRequest req, StaplerResponse rsp)
+	public HttpResponse doSubmit(StaplerRequest req, StaplerResponse rsp)
 			throws IOException, ServletException {
 		List<ParameterValue> values = new ArrayList<ParameterValue>();
 
@@ -99,7 +98,7 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 
 		run.save();
 
-		rsp.forwardToPreviousPage(req);
+		return new ForwardToPreviousPage();
 	}
 
 	public void cancel() throws IOException {

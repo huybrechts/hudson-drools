@@ -3,6 +3,7 @@ package hudson.drools;
 import hudson.Functions;
 import hudson.model.BallColor;
 import hudson.model.BuildListener;
+import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
@@ -23,6 +24,8 @@ import javax.xml.xpath.XPathExpressionException;
 import org.dom4j.DocumentException;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkflowProcessInstance;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -264,7 +267,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		return logWriter;
 	}
 
-	public void doDoCancel(StaplerRequest req, StaplerResponse rsp)
+	public HttpResponse doDoCancel()
 			throws ServletException, IOException {
 		checkPermission(Job.BUILD);
 
@@ -279,7 +282,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		// TODO check if we get this through events already ?
 		setStatus(Status.ABORTED);
 
-		rsp.sendRedirect2(req.getContextPath() + '/' + getUrl());
+		return new HttpRedirect(Hudson.getInstance().getRootUrl() + getUrl());
 	}
 
 	public void cancel() throws Exception {
@@ -287,7 +290,8 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	}
 
 	public void dispose() {
-		if (logWriter != null) logWriter.close();
+		if (logWriter != null)
+			logWriter.close();
 	}
 
 }
