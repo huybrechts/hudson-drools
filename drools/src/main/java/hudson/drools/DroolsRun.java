@@ -127,7 +127,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		run(new RunnerImpl());
 	}
 
-	protected class RunnerImpl implements Runner {
+	protected class RunnerImpl extends Runner {
 
 		public void cleanUp(BuildListener listener) throws Exception {
 		}

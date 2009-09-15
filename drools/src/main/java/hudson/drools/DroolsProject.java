@@ -51,7 +51,7 @@ import org.kohsuke.stapler.export.Exported;
 import antlr.ANTLRException;
 
 public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
-		TopLevelItem, hudson.model.Queue.Task, BuildableItem {
+		TopLevelItem, hudson.model.Queue.FlyweightTask, BuildableItem {
 
 	private boolean disabled;
 	private String processXML;

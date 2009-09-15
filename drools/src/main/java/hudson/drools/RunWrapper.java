@@ -20,7 +20,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 public class RunWrapper implements Externalizable {
-	
+
 	private static final long serialVersionUID = 1;
 
 	private transient Run<?, ?> run;
@@ -29,8 +29,9 @@ public class RunWrapper implements Externalizable {
 		super();
 		this.run = run;
 	}
-	
-	public RunWrapper() {}
+
+	public RunWrapper() {
+	}
 
 	public Run getRun() {
 		return run;
@@ -83,49 +84,57 @@ public class RunWrapper implements Externalizable {
 		out.writeUTF(s);
 	}
 
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
 		String s = in.readUTF();
 		run = stringToRun(s);
 	}
-	
+
 	public static String runToString(Run run) {
-		if (run == null) return "";
+		if (run == null)
+			return "";
 		Job<?, ?> job = run.getParent();
 		String convertedValue = job.getName() + "#" + run.getNumber();
 		return convertedValue;
 	}
 
 	public static Run stringToRun(String id) {
-		if ("".equals(id)) return null;
-		
+		if ("".equals(id))
+			return null;
 		int hash = id.lastIndexOf('#');
+		
+		if (hash < 0) return null;
+		
 		String jobName = id.substring(0, hash);
 		String runNumber = id.substring(hash + 1);
 		Hudson hudson = Hudson.getInstance();
-		if (hudson == null) return null; // in simple unit test
+		if (hudson == null)
+			return null; // in simple unit test
 		Job<?, ?> job = (Job<?, ?>) hudson.getItemMap().get(jobName);
-		if (job == null) return null;
+		if (job == null)
+			return null;
 		Run<?, ?> run = job.getBuildByNumber(Integer.parseInt(runNumber));
 
 		return run;
-
 	}
 
-    public static final class ConverterImpl implements Converter {
-        public ConverterImpl() {
-        }
+	public static final class ConverterImpl implements Converter {
+		public ConverterImpl() {
+		}
 
-        public boolean canConvert(Class type) {
-            return type==RunWrapper.class;
-        }
+		public boolean canConvert(Class type) {
+			return type == RunWrapper.class;
+		}
 
-        public void marshal(Object source, HierarchicalStreamWriter writer, MarshallingContext context) {
-            RunWrapper src = (RunWrapper) source;
-            writer.setValue(runToString(src.run));
-        }
+		public void marshal(Object source, HierarchicalStreamWriter writer,
+				MarshallingContext context) {
+			RunWrapper src = (RunWrapper) source;
+			writer.setValue(runToString(src.run));
+		}
 
-        public Object unmarshal(HierarchicalStreamReader reader, final UnmarshallingContext context) {
-            return stringToRun(reader.getValue());
-        }
-    }
+		public Object unmarshal(HierarchicalStreamReader reader,
+				final UnmarshallingContext context) {
+			return stringToRun(reader.getValue());
+		}
+	}
 }
