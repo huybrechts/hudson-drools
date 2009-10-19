@@ -67,8 +67,7 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public void scheduleBuild() {
-		AbstractProject project = (AbstractProject) Hudson.getInstance()
-				.getItem(projectName);
+		AbstractProject project = (AbstractProject) Hudson.getInstance().getItem(projectName);
 		if (project == null) {
 			throw new IllegalArgumentException("project " + projectName
 					+ " does not exist (work item " + workItemId + ")");
@@ -79,6 +78,15 @@ public class WorkItemAction extends ParametersAction {
 	public void buildComplete(Run r) {
 		run = r;
 		save();
+		
+		try {
+			DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
+					droolsProjectName);
+			p.removePendingWorkItemBuild(this);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 
 		// TODO add logging when this happens
 		if (!completeWhenUnstable && r.getResult() == Result.UNSTABLE) {

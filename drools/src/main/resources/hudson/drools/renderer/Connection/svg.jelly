@@ -1,0 +1,8 @@
+<j:jelly xmlns:svg="http://www.w3.org/2000/svg" xmlns:j="jelly:core"
+	xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	<svg:line x1="${it.from.rectangle.centerX}" y1="${it.from.rectangle.centerY}"
+		x2="${it.to.rectangle.centerX}" y2="${it.to.rectangle.centerY}" 
+		style="stroke:rgb(0,0,0);stoke-width:1" />
+
+</j:jelly>

@@ -1,5 +1,20 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
+	xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project">
 
-	  <img src="processImage"/>
-
+	<MAP NAME="map">
+		<j:forEach var="node" items="${it.ruleFlowRenderer.nodes}">
+			<j:if test="${node.url != null}">
+				<area shape="rect"
+					coords="${node.x},${node.y},${node.x+node.width},${node.y+node.height}"
+					href="${rootURL}/${node.url}" alt="${node.name}" title="${node.name}" />
+			</j:if>
+		</j:forEach>
+	</MAP>
+	<img src="processImage" usemap="#map"/>
+	<!--
+		<object type="svg+xml" data="ruleFlowRenderer/svg"
+		width="${it.ruleFlowRenderer.width}"
+		height="${it.ruleFlowRenderer.height}"/>
+	-->
 </j:jelly>

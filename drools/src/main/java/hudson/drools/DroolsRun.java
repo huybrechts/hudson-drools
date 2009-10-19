@@ -1,6 +1,7 @@
 package hudson.drools;
 
 import hudson.Functions;
+import hudson.drools.renderer.RuleFlowRenderer;
 import hudson.model.BallColor;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;

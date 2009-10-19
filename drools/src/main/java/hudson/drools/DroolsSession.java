@@ -8,11 +8,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.Collection;
+import java.util.Properties;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -24,6 +23,8 @@ import org.drools.builder.KnowledgeBuilderError;
 import org.drools.builder.KnowledgeBuilderErrors;
 import org.drools.builder.KnowledgeBuilderFactory;
 import org.drools.builder.ResourceType;
+import org.drools.common.InternalWorkingMemory;
+import org.drools.common.InternalWorkingMemoryEntryPoint;
 import org.drools.compiler.PackageBuilderConfiguration;
 import org.drools.definition.KnowledgePackage;
 import org.drools.definition.process.Process;
@@ -31,7 +32,8 @@ import org.drools.impl.EnvironmentFactory;
 import org.drools.io.impl.ReaderResource;
 import org.drools.marshalling.Marshaller;
 import org.drools.marshalling.MarshallerFactory;
-import org.drools.marshalling.ObjectMarshallingStrategy;
+import org.drools.marshalling.impl.ProcessMarshallerRegistry;
+import org.drools.ruleflow.core.RuleFlowProcess;
 import org.drools.runtime.Environment;
 import org.drools.runtime.KnowledgeSessionConfiguration;
 import org.drools.runtime.StatefulKnowledgeSession;
@@ -56,7 +58,8 @@ public class DroolsSession {
 		return processId;
 	}
 
-	public DroolsSession(File saved, String processXML) throws IOException {
+	public DroolsSession(File saved, String processXML,
+			int initialProcessInstanceId) throws IOException {
 		this.saved = saved;
 
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory
@@ -86,27 +89,12 @@ public class DroolsSession {
 		kbase = KnowledgeBaseFactory.newKnowledgeBase();
 		kbase.addKnowledgePackages(knowledgePackages);
 
-		marshaller = MarshallerFactory.newMarshaller(kbase, new ObjectMarshallingStrategy[] {
-				new ObjectMarshallingStrategy(){
-				
-					public void write(ObjectOutputStream os, Object object) throws IOException {
-						
-					}
-				
-					public Object read(ObjectInputStream os) throws IOException,
-							ClassNotFoundException {
-						return null;
-					}
-				
-					public boolean accept(Object object) {
-						System.out.println(object);
-						return false;
-					}
-				},
-				MarshallerFactory.newSerializeMarshallingStrategy()
-		});
+		marshaller = MarshallerFactory.newMarshaller(kbase);
 
-		KnowledgeSessionConfiguration conf = new SessionConfiguration();
+		SessionConfiguration conf = new SessionConfiguration();
+		Properties p = new Properties();
+		p.setProperty("drools.processInstanceManagerFactory", HudsonProcessInstanceManagerFactory.class.getName());
+		conf.addProperties(p);
 		Environment env = EnvironmentFactory.newEnvironment();
 		if (!saved.exists() || saved.length() == 0) {
 			session = kbase.newStatefulKnowledgeSession(conf, env);
@@ -114,7 +102,7 @@ public class DroolsSession {
 			InputStream is = null;
 			try {
 				is = new FileInputStream(saved);
-				session = marshaller.unmarshall(is);
+				session = marshaller.unmarshall(is, conf, env);
 			} catch (ClassNotFoundException e) {
 				throw new IOException2("Class not found while unmarshalling "
 						+ saved.getAbsolutePath(), e);
@@ -125,35 +113,45 @@ public class DroolsSession {
 				is.close();
 			}
 		}
+
+		((HudsonProcessInstanceManager) ((InternalWorkingMemoryEntryPoint) session)
+				.getInternalWorkingMemory().getProcessInstanceManager())
+				.setProcessCounter(initialProcessInstanceId);
 	}
 
 	public synchronized void save() throws IOException {
 		OutputStream os = null;
 		try {
-			File newSaved = new File(saved.getParentFile(), saved.getName() + ".new");
-			File backupSaved = new File(saved.getParentFile(), saved.getName() + ".bak");
+			File newSaved = new File(saved.getParentFile(), saved.getName()
+					+ ".new");
+			File backupSaved = new File(saved.getParentFile(), saved.getName()
+					+ ".bak");
 			os = new FileOutputStream(newSaved);
 			marshaller.marshall(os, session);
 			os.close();
 			os = null;
-			
+
 			if (backupSaved.exists()) {
 				if (!backupSaved.delete()) {
-					throw new IOException("could not remove backup " + backupSaved.getAbsolutePath());
+					throw new IOException("could not remove backup "
+							+ backupSaved.getAbsolutePath());
 				}
 			}
 			if (saved.exists()) {
 				if (!saved.renameTo(backupSaved)) {
-					throw new IOException("could not backup " + saved.getAbsolutePath());
+					throw new IOException("could not backup "
+							+ saved.getAbsolutePath());
 				}
 			}
 			if (!newSaved.renameTo(saved)) {
 				backupSaved.renameTo(saved);
-				throw new IOException("could not rename " + saved.getAbsolutePath() );
+				throw new IOException("could not rename "
+						+ saved.getAbsolutePath());
 			}
-			
+
 		} finally {
-			if (os != null) os.close();
+			if (os != null)
+				os.close();
 		}
 	}
 

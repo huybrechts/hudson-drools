@@ -1,0 +1,17 @@
+<j:jelly xmlns:svg="http://www.w3.org/2000/svg" xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
+	xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+	<st:contentType value="image/svg+xml" />
+	<svg:svg width="${it.width}" height="${it.height}">
+		<svg:g>
+
+			<j:forEach var="connection" items="${it.connections}">
+				<st:include it="${connection}" page="svg.jelly" />
+			</j:forEach>
+
+			<j:forEach var="node" items="${it.nodes}">
+				<st:include it="${node}" page="svg.jelly" />
+			</j:forEach>
+
+		</svg:g>
+	</svg:svg>
+</j:jelly>

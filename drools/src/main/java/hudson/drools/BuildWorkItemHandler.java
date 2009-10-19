@@ -2,6 +2,7 @@ package hudson.drools;
 
 import hudson.model.BooleanParameterValue;
 import hudson.model.ParameterValue;
+import hudson.model.Run;
 import hudson.model.RunParameterValue;
 import hudson.model.StringParameterValue;
 
@@ -55,11 +56,21 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 			}
 		}
 
-		new WorkItemAction(project.getName(), workItem.getId(), workItem
-				.getProcessInstanceId(), projectName,
-				completeWhenFailed != null ? completeWhenFailed : false,
-				completeWhenUnstable != null ? completeWhenUnstable : false,
-				values).scheduleBuild();
+		try {
+			WorkItemAction action = new WorkItemAction(
+					project.getName(),
+					workItem.getId(),
+					workItem.getProcessInstanceId(),
+					projectName,
+					completeWhenFailed != null ? completeWhenFailed : false,
+					completeWhenUnstable != null ? completeWhenUnstable : false,
+					values);
+			project.addPendingWorkItemBuild(action);
+			action.scheduleBuild();
+		} catch (Exception e) {
+			DroolsRun run = project.getFromProcessInstance(workItem.getProcessInstanceId());
+			e.printStackTrace(run.getLogWriter());
+		}
 
 	}
 

@@ -116,7 +116,7 @@
 	</dependencyManagement>
 
 	<properties>
-		<drools.version>5.0.1</drools.version>
+		<drools.version>5.1.0.M1</drools.version>
 		<hudson.version>1.320</hudson.version>
 	</properties>
 
