@@ -50,9 +50,9 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 						(Boolean) parameter.getValue(), "drools parameter"));
 			}
 			if (parameter.getValue() instanceof RunWrapper) {
+				Run run = ((RunWrapper) parameter.getValue()).getRun();
 				values.add(new RunParameterValue(parameter.getKey(),
-						((RunWrapper) parameter.getValue()).getRun()
-								.getExternalizableId(), "drools parameter"));
+						run != null ? run.getExternalizableId() : null, "drools parameter"));
 			}
 		}
 

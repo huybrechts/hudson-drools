@@ -55,9 +55,11 @@ public class Build extends WorkItem {
 			return run.getUrl();
 		}
 		
-		Job job = RuleFlowRenderer.getJobUrl(project);
-		if (job != null) {
-			return job.getUrl();
+		if (project != null) {
+			Job job = RuleFlowRenderer.getJobUrl(project);
+			if (job != null) {
+				return job.getUrl();
+			}
 		}
 		
 		return null;

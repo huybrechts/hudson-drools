@@ -12,6 +12,8 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -40,6 +42,8 @@ import org.drools.runtime.StatefulKnowledgeSession;
 
 public class DroolsSession {
 
+	private static Logger LOGGER = Logger.getLogger(DroolsSession.class.getName());
+	
 	private final StatefulKnowledgeSession session;
 	private final KnowledgeBase kbase;
 	private final Marshaller marshaller;
@@ -161,8 +165,7 @@ public class DroolsSession {
 
 	public synchronized <T> T run(SessionCallable<T> callable) throws Exception {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Authentication auth = SecurityContextHolder.getContext()
-				.getAuthentication();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		try {
 			SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 			Thread.currentThread().setContextClassLoader(
@@ -173,6 +176,9 @@ public class DroolsSession {
 			save();
 
 			return result;
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Exception while running " + callable + " on " + processId, e);
+			throw e;
 		} finally {
 			SecurityContextHolder.getContext().setAuthentication(auth);
 			Thread.currentThread().setContextClassLoader(cl);

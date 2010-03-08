@@ -4,6 +4,8 @@ import hudson.Functions;
 import hudson.drools.renderer.RuleFlowRenderer;
 import hudson.model.BallColor;
 import hudson.model.BuildListener;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Queue;
@@ -138,6 +140,13 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 
 		public Result run(BuildListener listener) throws Exception,
 				hudson.model.Run.RunnerAbortedException {
+			CauseAction cause = getAction(CauseAction.class);
+			if (cause != null) {
+				PrintWriter logWriter = getLogWriter();
+				for (Cause c: cause.getCauses()) {
+					logWriter.println(c.getShortDescription());
+				}
+			}
 
 			ProcessInstance instance = getParent().run(
 					new StartProcessCallable(DroolsRun.this, getParent()
@@ -271,6 +280,8 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	public HttpResponse doDoCancel()
 			throws ServletException, IOException {
 		checkPermission(Job.BUILD);
+
+		getLogWriter().println("Workflow canceled by " + Hudson.getAuthentication().getName());
 
 		try {
 			cancel();

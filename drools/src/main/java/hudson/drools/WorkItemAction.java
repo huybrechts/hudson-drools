@@ -67,12 +67,18 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public void scheduleBuild() {
-		AbstractProject project = (AbstractProject) Hudson.getInstance().getItem(projectName);
+		Job project = (Job) Hudson.getInstance().getItem(projectName);
 		if (project == null) {
 			throw new IllegalArgumentException("project " + projectName
 					+ " does not exist (work item " + workItemId + ")");
 		}
-		project.scheduleBuild(0, new DroolsCause("Started by workflow"), this);
+		if (project instanceof AbstractProject) {
+			((AbstractProject) project).scheduleBuild(0, new DroolsCause("Started by workflow"), this);
+		} else if (project instanceof DroolsProject) {
+			((DroolsProject) project).scheduleBuild(new DroolsCause("Started by workflow"), this);
+		} else {
+			throw new IllegalArgumentException("project " + projectName + " has an unsupported type: " + project.getClass());
+		}
 	}
 
 	public void buildComplete(Run r) {
@@ -191,9 +197,20 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public boolean isAllowComplete() {
+		if (completed) {
+			return false;
+		}
+		
 		DroolsRun droolsRun = getDroolsRun();
-		return !completed && run != null && droolsRun != null
-				&& !droolsRun.isCompleted();
+		if (droolsRun == null || !droolsRun.isRunning()) {
+			return false;
+		}
+		if (run == null) {
+			return false;
+		}
+
+		return true;
+		
 	}
 
 	public DroolsRun getDroolsRun() {

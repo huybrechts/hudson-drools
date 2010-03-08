@@ -2,6 +2,7 @@ package hudson.drools;
 
 import hudson.model.AbstractModelObject;
 import hudson.model.BooleanParameterValue;
+import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -12,6 +13,7 @@ import hudson.security.AccessControlled;
 import hudson.security.Permission;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +85,12 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 						((BooleanParameterValue) value).value);
 			}
 		}
-
+		
+		PrintWriter log = run.getLogWriter();
+		log.println("HumanTask " + displayName + " #" + workItemId + " submitted.");
+		log.println("\tUser: " + Hudson.getAuthentication().getName());
+		log.println("\tResults: " + results);
+		
 		try {
 			run.getParent().run(
 					new CompleteWorkItemCallable(workItemId, results));

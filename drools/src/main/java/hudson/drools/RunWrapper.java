@@ -56,6 +56,10 @@ public class RunWrapper implements Externalizable {
 	public String getProjectName() {
 		return run.getParent().getName();
 	}
+	
+	public int getBuildNumber() {
+		return run.getNumber();
+	}
 
 	@Override
 	public String toString() {
@@ -87,7 +91,9 @@ public class RunWrapper implements Externalizable {
 	public void readExternal(ObjectInput in) throws IOException,
 			ClassNotFoundException {
 		String s = in.readUTF();
-		run = stringToRun(s);
+		if (!"".equals(s)) {
+			run = stringToRun(s);
+		}
 	}
 
 	public static String runToString(Run run) {
@@ -99,7 +105,7 @@ public class RunWrapper implements Externalizable {
 	}
 
 	public static Run stringToRun(String id) {
-		if ("".equals(id))
+		if (id == null || "".equals(id))
 			return null;
 		int hash = id.lastIndexOf('#');
 		
@@ -134,7 +140,67 @@ public class RunWrapper implements Externalizable {
 
 		public Object unmarshal(HierarchicalStreamReader reader,
 				final UnmarshallingContext context) {
-			return stringToRun(reader.getValue());
+			String id = reader.getValue();
+			Run r = stringToRun(id);
+			if (r != null) return new RunWrapper(r);
+			
+			int hash = id.lastIndexOf('#');
+			if (hash > 0) {
+				String jobName = id.substring(0, hash);
+				String runNumber = id.substring(hash + 1);
+				return new NullRunWrapper(jobName, runNumber);
+			} else {
+				return new NullRunWrapper();
+			}
+		}
+	}
+	
+	public static class NullRunWrapper extends RunWrapper {
+		private String buildNumber;
+		private String projectName;
+		
+		public NullRunWrapper() {
+			// required for Externalizable
+		}
+
+		NullRunWrapper(String projectName, String buildNumber) {
+			super(null);
+			this.projectName = projectName;
+			this.buildNumber = buildNumber;
+		}
+		
+		public String getDisplayName() {
+			return "build unavailable";
+		}
+
+		public Result getResult() {
+			return Result.NOT_BUILT;
+		}
+
+		public boolean isSuccess() {
+			return false;
+		}
+
+		public boolean isUnstable() {
+			return false;
+		}
+
+		public String getProjectName() {
+			return projectName;
+		}
+
+		@Override
+		public String toString() {
+			if (projectName != null && buildNumber != null) {
+				return projectName + " #" + buildNumber;
+			} else {
+				return "<unknown>";
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return toString().hashCode();
 		}
 	}
 }

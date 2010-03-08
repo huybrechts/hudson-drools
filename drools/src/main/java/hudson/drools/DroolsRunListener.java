@@ -28,18 +28,18 @@ public class DroolsRunListener extends RunListener<Run> {
 			action.buildComplete(r);
 		}
 
-		for (DroolsProject project : Hudson.getInstance().getItems(
-				DroolsProject.class)) {
-			try {
-				if (!project.isDisabled()) {
-					project.run(new SignalEventCallable(r));
-				}
-			} catch (Exception e) {
-				logger.log(Level.WARNING, String.format(
-						"Error while sending BuildComplete event for %s to %s",
-						r.getDisplayName(), project.getDisplayName()), e);
-			}
-		}
+//		for (DroolsProject project : Hudson.getInstance().getItems(
+//				DroolsProject.class)) {
+//			try {
+//				if (!project.isDisabled()) {
+//					project.run(new SignalEventCallable(r));
+//				}
+//			} catch (Exception e) {
+//				logger.log(Level.WARNING, String.format(
+//						"Error while sending BuildComplete event for %s to %s",
+//						r.getDisplayName(), project.getDisplayName()), e);
+//			}
+//		}
 
 	}
 }
