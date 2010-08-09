@@ -1,2 +1,4 @@
-*.tlog
 work
+.classpath
+.settings
+.project
