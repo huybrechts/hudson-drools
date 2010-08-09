@@ -2,24 +2,26 @@ package hudson.drools;
 
 import hudson.Extension;
 import hudson.drools.renderer.RuleFlowRenderer;
-import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
-import hudson.model.Cause;
-import hudson.model.CauseAction;
-import hudson.model.Hudson;
+import hudson.model.Descriptor.FormException;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
+import hudson.model.ResourceList;
+import hudson.model.RunMap;
+import hudson.model.RunMap.Constructor;
+import hudson.model.TopLevelItem;
+import hudson.model.TopLevelItemDescriptor;
+import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.Cause.UserCause;
+import hudson.model.CauseAction;
+import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.model.ResourceList;
-import hudson.model.RunMap;
-import hudson.model.TopLevelItem;
-import hudson.model.TopLevelItemDescriptor;
-import hudson.model.Cause.UserCause;
 import hudson.model.Queue.Executable;
-import hudson.model.RunMap.Constructor;
+import hudson.model.queue.CauseOfBlockage;
 import hudson.scheduler.CronTabList;
 import hudson.security.AuthorizationMatrixProperty;
 
@@ -198,7 +200,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
     @Override
     public synchronized void doConfigSubmit(StaplerRequest req,
-            StaplerResponse rsp) throws IOException, ServletException {
+            StaplerResponse rsp) throws IOException, ServletException, FormException {
         checkPermission(CONFIGURE);
 
         JSONObject form = req.getSubmittedForm();
@@ -379,7 +381,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
         List<String> result = new ArrayList<String>();
 
         AuthorizationMatrixProperty amp = getProperty(AuthorizationMatrixProperty.class);
-        if (amp != null && amp.isUseProjectSecurity()) {
+        if (amp != null) {
             for (String sid : amp.getAllSIDs()) {
                 if (amp.hasPermission(sid, Job.BUILD)) {
                     result.add(sid);
@@ -479,5 +481,13 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	public Object readResolve() {
 		if (pendingBuilds == null) pendingBuilds = new ArrayList<WorkItemAction>();
 		return this;
+	}
+
+	public CauseOfBlockage getCauseOfBlockage() {
+		return null;
+	}
+
+	public boolean isConcurrentBuild() {
+		return false;
 	}
 }

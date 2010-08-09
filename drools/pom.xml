@@ -18,7 +18,7 @@
   <parent> 
       <groupId>org.jvnet.hudson.plugins</groupId>
       <artifactId>plugin</artifactId>
-      <version>1.320</version>
+      <version>1.362</version>
       <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -78,9 +78,9 @@
 			<version>1.6</version>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse.jdt</groupId>
-			<artifactId>core</artifactId>
-			<version>3.4.2.v_883_R34x</version>
+		  <groupId>org.sonatype.tycho</groupId>
+		  <artifactId>org.eclipse.jdt.core</artifactId>
+		  <version>3.6.0.v_A48</version>
 		</dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -117,7 +117,7 @@
 
 	<properties>
 		<drools.version>5.1.0.M1</drools.version>
-		<hudson.version>1.320</hudson.version>
+		<hudson.version>1.362</hudson.version>
 	</properties>
 
 	<repositories>
@@ -156,7 +156,7 @@
 				<groupId>org.jvnet.hudson.tools</groupId>
 				<artifactId>maven-hpi-plugin</artifactId>
 				<extensions>true</extensions>
-				<version>1.37</version>
+				<version>1.52</version>
 				<dependencies>
 					<dependency>
 						<groupId>javax.servlet</groupId>
@@ -164,9 +164,9 @@
 						<version>2.4</version>
 					</dependency>
 					<dependency>
-						<groupId>org.eclipse.jdt</groupId>
-						<artifactId>core</artifactId>
-						<version>3.4.2.v_883_R34x</version>
+					  <groupId>org.sonatype.tycho</groupId>
+					  <artifactId>org.eclipse.jdt.core</artifactId>
+					  <version>3.6.0.v_A48</version>
 					</dependency>
 				</dependencies>
 			</plugin>

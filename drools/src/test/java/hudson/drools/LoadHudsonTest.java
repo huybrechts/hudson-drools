@@ -2,11 +2,13 @@ package hudson.drools;
 
 import junit.framework.Assert;
 
+import org.junit.Ignore;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 public class LoadHudsonTest extends HudsonTestCase {
-
+	
+	@Ignore("resources missing")
 	@LocalData
 	public void testLoad() {
 		
