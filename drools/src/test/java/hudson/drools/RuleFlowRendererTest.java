@@ -35,7 +35,7 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 				"Another Automated Test");
 
 		DroolsManagement.getInstance().getScripts().add(
-				new Script("DeployStagedRelease", ""));
+				new GroovyScript("DeployStagedRelease", ""));
 		wf.scheduleBuild(0);
 
 		WebClient wc = new WebClient();
@@ -57,7 +57,7 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 				"Build");
 
 		DroolsManagement.getInstance().getScripts().add(
-				new Script("DeployStagedRelease", ""));
+				new GroovyScript("DeployStagedRelease", ""));
 
 		WebClient wc = new WebClient();
 		wc.goTo(wf.getUrl() + "/processImage", "image/png");

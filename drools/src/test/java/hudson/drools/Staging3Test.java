@@ -40,7 +40,7 @@ public class Staging3Test extends DroolsTestCase {
 		deployScriptCalled = false;
 
 		DroolsManagement.getInstance().getScripts().add(
-				new Script("DeployStagedRelease", "") {
+				new GroovyScript("DeployStagedRelease", "") {
 					@Override
 					public Map execute(StatefulKnowledgeSession session,
 							PrintWriter output, Map<String, Object> parameters)

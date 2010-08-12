@@ -18,7 +18,7 @@ public class ScriptTest extends DroolsTestCase {
 
 	public void testScriptExecution() throws Exception {
 		String source = "println \"script executed\"";
-		DroolsManagement.getInstance().setScripts(new Script("script", source));
+		DroolsManagement.getInstance().setScripts(new GroovyScript("script", source));
 
 		project.scheduleBuild();
 		waitForWorkflowComplete(project, 1);
@@ -33,7 +33,7 @@ public class ScriptTest extends DroolsTestCase {
 
 	public void testScriptExecutionFailed() throws Exception {
 		String source = "throw new Exception()";
-		DroolsManagement.getInstance().setScripts(new Script("script", source));
+		DroolsManagement.getInstance().setScripts(new GroovyScript("script", source));
 
 		project.scheduleBuild();
 
@@ -53,7 +53,7 @@ public class ScriptTest extends DroolsTestCase {
 				+ scriptExecution.getUrl() + "/run']");
 		Assert.assertNotNull(anchor);
 
-		DroolsManagement.getInstance().setScripts(new Script("script", ""));
+		DroolsManagement.getInstance().setScripts(new GroovyScript("script", ""));
 
 		anchor.click();
 
@@ -75,7 +75,7 @@ public class ScriptTest extends DroolsTestCase {
 		source.append("assert args != null\n");
 		source.append("assert out != null\n");
 		DroolsManagement.getInstance().setScripts(
-				new Script("script", source.toString()));
+				new GroovyScript("script", source.toString()));
 
 		project.scheduleBuild();
 		waitForWorkflowComplete(project, 1);

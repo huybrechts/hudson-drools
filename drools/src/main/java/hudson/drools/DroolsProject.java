@@ -1,6 +1,7 @@
 package hudson.drools;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.drools.renderer.RuleFlowRenderer;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
@@ -20,18 +21,22 @@ import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.model.ParametersAction;
 import hudson.model.Queue.Executable;
+import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.scheduler.CronTabList;
 import hudson.security.AuthorizationMatrixProperty;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
+import java.util.concurrent.Future;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -40,6 +45,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.DocumentException;
@@ -56,420 +62,446 @@ import antlr.ANTLRException;
 public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		TopLevelItem, hudson.model.Queue.FlyweightTask, BuildableItem {
 
-    private boolean disabled;
-    private String processXML;
+	private boolean disabled;
+	private File archive;
+	private String workflowId;
+	private String triggerSpec;
+	private List<WorkItemAction> pendingBuilds = new ArrayList<WorkItemAction>();
 
-    private transient DroolsSession session;
+	private transient DroolsSession session;
+	private transient CronTabList tabs;
+	private transient String processXML;
+	private transient ClassLoader workflowCL;
+	private transient SoftReference<RuleFlowRenderer> renderer;
 
-    private String triggerSpec;
-    private transient CronTabList tabs;
 
-    private List<Script> scripts = new ArrayList<Script>();
-    
-    private List<WorkItemAction> pendingBuilds = new ArrayList<WorkItemAction>();
+	/**
+	 * All the builds keyed by their build number.
+	 */
+	protected transient/* almost final */RunMap<DroolsRun> builds = new RunMap<DroolsRun>();
 
-    /**
-     * All the builds keyed by their build number.
-     */
-    protected transient/* almost final */RunMap<DroolsRun> builds = new RunMap<DroolsRun>();
+	protected DroolsProject(ItemGroup<?> parent, String name) {
+		super(parent, name);
+	}
 
-    protected DroolsProject(ItemGroup<?> parent, String name) {
-        super(parent, name);
-    }
+	@Override
+	protected SortedMap<Integer, ? extends DroolsRun> _getRuns() {
+		return builds.getView();
+	}
 
-    @Override
-    protected SortedMap<Integer, ? extends DroolsRun> _getRuns() {
-        return builds.getView();
-    }
+	@Override
+	public boolean isBuildable() {
+		return true;
+	}
 
-    @Override
-    public boolean isBuildable() {
-        return true;
-    }
+	@Override
+	protected void removeRun(DroolsRun run) {
+		this.builds.remove(run);
+	}
 
-    @Override
-    protected void removeRun(DroolsRun run) {
-        this.builds.remove(run);
-    }
+	@Override
+	public void onLoad(ItemGroup<? extends Item> parent, String name)
+			throws IOException {
+		super.onLoad(parent, name);
 
-    @Override
-    public void onLoad(ItemGroup<? extends Item> parent, String name)
-            throws IOException {
-        super.onLoad(parent, name);
+		this.builds = new RunMap<DroolsRun>();
+		this.builds.load(this, new Constructor<DroolsRun>() {
+			public DroolsRun create(File dir) throws IOException {
+				DroolsRun newBuild = new DroolsRun(DroolsProject.this, dir);
+				builds.put(newBuild);
+				return newBuild;
+			}
+		});
 
-        this.builds = new RunMap<DroolsRun>();
-        this.builds.load(this, new Constructor<DroolsRun>() {
-            public DroolsRun create(File dir) throws IOException {
-                DroolsRun newBuild = new DroolsRun(DroolsProject.this, dir);
-                builds.put(newBuild);
-                return newBuild;
-            }
-        });
-        
-        
-       try {
-        	set(triggerSpec, processXML, scripts);
-        } catch (Exception e) {
-        	disabled = true;
-        	e.printStackTrace();
-        }
-        
-    }
-    
-    private int getMaxProcessInstanceId() {
-    	int max = 0;
-    	for (DroolsRun build: builds.values()) {
-    		max = Math.max(max, (int) build.getProcessInstanceId());
-    	}
-    	return max;
-    }
+		try {
+			set(triggerSpec, archive, workflowId);
+		} catch (Exception e) {
+			disabled = true;
+			e.printStackTrace();
+		}
 
-    void set(String triggerSpec, String processXML, List<Script> scripts)
-            throws IOException {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(
-                PluginImpl.class.getClassLoader());
-        try {
-        	int initialId = getMaxProcessInstanceId() + 1;
-            DroolsSession session = processXML != null ? new DroolsSession(
-                    new File(getRootDir(), "session.ser"), processXML, initialId) : null;
+	}
 
-            CronTabList tabs = null;
-            if (!StringUtils.isEmpty(triggerSpec)) {
-                try {
-                    tabs = CronTabList.create(triggerSpec);
-                } catch (ANTLRException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                tabs = null;
-                triggerSpec = null;
-            }
+	private int getMaxProcessInstanceId() {
+		int max = 0;
+		for (DroolsRun build : builds.values()) {
+			max = Math.max(max, (int) build.getProcessInstanceId());
+		}
+		return max;
+	}
+	
+	public void testSetWorkflow(String workflowId) throws IOException {
+		set(null, null, workflowId);
+	}
 
-            // all is well -- let's commit
-            this.processXML = processXML;
-            this.session = session;
-            this.triggerSpec = triggerSpec;
-            this.tabs = tabs;
-            this.scripts = scripts != null ? scripts : new ArrayList<Script>();
+	void set(String triggerSpec, File archive, String workflowId)
+			throws IOException {
+		ClassLoader workflowCL = archive != null ? 
+				ArchiveManager.getInstance().getClassLoader(archive) :
+				Thread.currentThread().getContextClassLoader();
 
-            WorkItemManager workItemManager = session.getSession()
-                    .getWorkItemManager();
-            workItemManager.registerWorkItemHandler("Build",
-                    new BuildWorkItemHandler(this));
-            workItemManager.registerWorkItemHandler("Human Task",
-                    new HumanTaskHandler(this));
-            workItemManager.registerWorkItemHandler("Script",
-                    new ScriptHandler(this));
-            workItemManager.registerWorkItemHandler("E-Mail",
-                    new EmailWorkItemHandler());
+		String processXML = hudson.util.IOUtils.toString(workflowCL
+				.getResourceAsStream(workflowId));
 
-            KnowledgeRuntimeLoggerFactory
-                    .newConsoleLogger(session.getSession());
-            new WorkingMemoryHudsonLogger(session.getSession(), this);
+		ClassLoader cl = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(
+				PluginImpl.class.getClassLoader());
+		try {
+			int initialId = getMaxProcessInstanceId() + 1;
+			DroolsSession session = workflowId != null ? new DroolsSession(
+					new File(getRootDir(), "session.ser"), processXML,
+					initialId) : null;
 
-        } finally {
-            Thread.currentThread().setContextClassLoader(cl);
-        }
-    }
+			CronTabList tabs = null;
+			if (!StringUtils.isEmpty(triggerSpec)) {
+				try {
+					tabs = CronTabList.create(triggerSpec);
+				} catch (ANTLRException e) {
+					e.printStackTrace();
+				}
+			} else {
+				tabs = null;
+				triggerSpec = null;
+			}
 
-    @Extension
-    public static final class DescriptorImpl extends TopLevelItemDescriptor {
+			// all is well -- let's commit
+			this.archive = archive;
+			this.session = session;
+			this.triggerSpec = triggerSpec;
+			this.tabs = tabs;
+			this.processXML = processXML;
+			this.workflowCL = workflowCL;
+			this.workflowId = workflowId;
 
-        @Override
-        public String getDisplayName() {
-            return "Drools Project";
-        }
+			WorkItemManager workItemManager = session.getSession()
+					.getWorkItemManager();
+			workItemManager.registerWorkItemHandler("Build",
+					new BuildWorkItemHandler(this));
+			workItemManager.registerWorkItemHandler("Human Task",
+					new HumanTaskHandler(this));
+			workItemManager.registerWorkItemHandler("Script",
+					new ScriptHandler(this));
+			workItemManager.registerWorkItemHandler("E-Mail",
+					new EmailWorkItemHandler());
 
-        @Override
-        public DroolsProject newInstance(String name) {
-            return new DroolsProject(Hudson.getInstance(), name);
-        }
+			KnowledgeRuntimeLoggerFactory
+					.newConsoleLogger(session.getSession());
+			new WorkingMemoryHudsonLogger(session.getSession(), this);
 
-    }
+		} finally {
+			Thread.currentThread().setContextClassLoader(cl);
+		}
+	}
 
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Hudson.getInstance().getDescriptor(
-                DroolsProject.class);
-    }
+	@Extension
+	public static final class DescriptorImpl extends TopLevelItemDescriptor {
 
-    @Override
-    public Hudson getParent() {
-        return Hudson.getInstance();
-    }
+		@Override
+		public String getDisplayName() {
+			return "Drools Project";
+		}
 
-    @Override
-    public synchronized void doConfigSubmit(StaplerRequest req,
-            StaplerResponse rsp) throws IOException, ServletException, FormException {
-        checkPermission(CONFIGURE);
+		@Override
+		public DroolsProject newInstance(String name) {
+			return new DroolsProject(Hudson.getInstance(), name);
+		}
 
-        JSONObject form = req.getSubmittedForm();
-        String processXML = form.getString("processXML");
-        String triggerSpec = form.getString("triggerSpec");
-        List<Script> scripts = req.bindJSONToList(Script.class, form
-                .get("scripts"));
+	}
 
-        set(triggerSpec, processXML, scripts);
+	public DescriptorImpl getDescriptor() {
+		return (DescriptorImpl) Hudson.getInstance().getDescriptor(
+				DroolsProject.class);
+	}
 
-        super.doConfigSubmit(req, rsp);
-    }
+	@Override
+	public Hudson getParent() {
+		return Hudson.getInstance();
+	}
 
-    /**
-     * Schedules a new build command.
-     */
-    public HttpResponse doBuild() throws IOException, ServletException {
-        checkPermission(BUILD);
+	@Override
+	public synchronized void doConfigSubmit(StaplerRequest req,
+			StaplerResponse rsp) throws IOException, ServletException,
+			FormException {
+		checkPermission(CONFIGURE);
 
-        Cause cause = new UserCause();
+		JSONObject form = req.getSubmittedForm();
+		String workflowId = form.getString("workflowId");
+		String triggerSpec = form.getString("triggerSpec");
 
-        scheduleBuild(cause);
+		FileItem fileItem = req.getFileItem("file1");
+		boolean fileItemUploaded = fileItem != null && fileItem.getSize() > 0;
+		File newArchive = fileItemUploaded ?  ArchiveManager.getInstance().uploadFile(fileItem) : archive;
 
-        return new ForwardToPreviousPage();
-    }
+		set(triggerSpec, newArchive, workflowId);
 
-    public boolean scheduleBuild(Cause cause, Action... actions) {
-        if (isDisabled())
-            return false;
+		super.doConfigSubmit(req, rsp);
+	}
 
-        List<Action> queueActions = new ArrayList(Arrays.asList(actions));
-        if (cause != null) {
-            queueActions.add(new CauseAction(cause));
-        }
+	/**
+	 * Schedules a new build command.
+	 */
+	public HttpResponse doBuild() throws IOException, ServletException {
+		checkPermission(BUILD);
 
-        return Hudson.getInstance().getQueue().add(this, 0,
-                queueActions.toArray(new Action[queueActions.size()]));
-    }
+		Cause cause = new UserCause();
 
-    public boolean isDisabled() {
-        return session == null || disabled;
-    }
+		scheduleBuild(cause);
 
-    public void setDisabled(boolean disable) {
-        this.disabled = disable;
-    }
-    
-    public HttpResponse doEnable() {
-    	checkPermission(CONFIGURE);
-    	disabled = false;
-    	return new ForwardToPreviousPage();
-    }
+		return new ForwardToPreviousPage();
+	}
 
-    public void checkAbortPermission() {
-        checkPermission(AbstractProject.ABORT);
-    }
+	public boolean scheduleBuild(Cause cause, Action... actions) {
+		if (isDisabled())
+			return false;
 
-    public Executable createExecutable() throws IOException {
-        DroolsRun run = new DroolsRun(this);
-        builds.put(run);
-        return run;
-    }
+		List<Action> queueActions = new ArrayList(Arrays.asList(actions));
+		if (cause != null) {
+			queueActions.add(new CauseAction(cause));
+		}
 
-    public Label getAssignedLabel() {
+		return Hudson.getInstance().getQueue().add(this, 0,
+				queueActions.toArray(new Action[queueActions.size()]));
+	}
+
+	public boolean isDisabled() {
+		return session == null || disabled;
+	}
+
+	public void setDisabled(boolean disable) {
+		this.disabled = disable;
+	}
+
+	public HttpResponse doEnable() {
+		checkPermission(CONFIGURE);
+		disabled = false;
+		return new ForwardToPreviousPage();
+	}
+
+	public void checkAbortPermission() {
+		checkPermission(AbstractProject.ABORT);
+	}
+
+	public Executable createExecutable() throws IOException {
+		DroolsRun run = new DroolsRun(this);
+		builds.put(run);
+		return run;
+	}
+
+	public Label getAssignedLabel() {
+		return null;
+	}
+
+	public long getEstimatedDuration() {
+		return -1;
+	}
+
+	public Node getLastBuiltOn() {
+		return null;
+	}
+
+	public String getWhyBlocked() {
+		return null;
+	}
+
+	public boolean hasAbortPermission() {
+		return false;
+	}
+
+	public boolean isBuildBlocked() {
+		return false;
+	}
+
+	public ResourceList getResourceList() {
+		return new ResourceList();
+	}
+
+	public String getProcessId() {
+		return session.getProcessId();
+	}
+
+	public synchronized RuleFlowRenderer getRuleFlowRenderer() {
+		if (renderer == null || renderer.get() == null) {
+			renderer = new SoftReference<RuleFlowRenderer>(
+					new RuleFlowRenderer(processXML));
+		}
+		return renderer.get();
+	}
+
+	public void doProcessImage(StaplerRequest req, StaplerResponse rsp)
+			throws IOException, XPathExpressionException, DocumentException {
+		ServletOutputStream output = rsp.getOutputStream();
+		rsp.setContentType("image/png");
+		getRuleFlowRenderer().write(output);
+		output.flush();
+		output.close();
+	}
+
+	public void doProcessImageSVG(StaplerRequest req, StaplerResponse rsp)
+			throws IOException, XPathExpressionException, DocumentException {
+		ServletOutputStream output = rsp.getOutputStream();
+		rsp.setContentType("image/svg+xml");
+		getRuleFlowRenderer().writeSVG(output);
+		output.flush();
+		output.close();
+	}
+
+	@Exported
+	public String getProcessXML() {
+		return processXML;
+	}
+
+	@Exported
+	public String getTriggerSpec() {
+		return triggerSpec;
+	}
+
+	public boolean scheduleBuild() {
+		return scheduleBuild(null, new Action[0]);
+	}
+
+	public boolean scheduleBuild(Cause c) {
+		return scheduleBuild(c, new Action[0]);
+	}
+
+	public boolean scheduleBuild(int quietPeriod) {
+		return scheduleBuild(null, new Action[0]);
+	}
+
+	public boolean scheduleBuild(int quietPeriod, Cause c) {
+		return scheduleBuild(null, new CauseAction(c));
+	}
+
+    public Future<DroolsRun> scheduleBuild2() {
+        if (!isBuildable())
+            return null;
+
+        WaitingItem i = Hudson.getInstance().getQueue().schedule(this, 0, new Action[0]);
+        if(i!=null)
+            return (Future)i.getFuture();
         return null;
     }
+	
+	public CronTabList getTabs() {
+		return tabs;
+	}
 
-    public long getEstimatedDuration() {
-        return -1;
-    }
+	public void doSubmitWorkflow(StaplerRequest request, StaplerResponse rsp)
+			throws IOException {
+		checkPermission(CONFIGURE);
 
-    public Node getLastBuiltOn() {
-        return null;
-    }
+		if (!"POST".equals(request.getMethod())) {
+			rsp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+					"POST expected");
+			return;
+		}
 
-    public String getWhyBlocked() {
-        return null;
-    }
+		String processXML = IOUtils.toString(request.getInputStream());
+		set(triggerSpec, null, null); // TODO
 
-    public boolean hasAbortPermission() {
-        return false;
-    }
+		save();
+	}
 
-    public boolean isBuildBlocked() {
-        return false;
-    }
+	@Override
+	protected void performDelete() throws IOException, InterruptedException {
+		if (session != null)
+			session.dispose();
+		super.performDelete();
+	}
 
-    public ResourceList getResourceList() {
-        return new ResourceList();
-    }
+	public List<String> getUsersWithBuildPermission() {
+		List<String> result = new ArrayList<String>();
 
-    public String getProcessId() {
-        return session.getProcessId();
-    }
+		AuthorizationMatrixProperty amp = getProperty(AuthorizationMatrixProperty.class);
+		if (amp != null) {
+			for (String sid : amp.getAllSIDs()) {
+				if (amp.hasPermission(sid, Job.BUILD)) {
+					result.add(sid);
+				}
+			}
+		}
 
-    private transient WeakReference<RuleFlowRenderer> renderer;
+		return result;
+	}
 
-    public synchronized RuleFlowRenderer getRuleFlowRenderer() {
-        if (renderer == null || renderer.get() == null) {
-            renderer = new WeakReference<RuleFlowRenderer>(
-                    new RuleFlowRenderer(processXML));
-        }
-        return renderer.get();
-    }
+	/*
+	 * We need two strategies two find the DroolsRun. When the process is
+	 * starting, the DroolsRun does not know its processInstanceId yet, so we
+	 * query the process variable "run".
+	 * 
+	 * After the process is completed, the processInstance or variable will be
+	 * gone, so we need to iterate over all the builds to find the right one.
+	 */
+	public DroolsRun getFromProcessInstance(long processInstanceId) {
+		DroolsRun result = null;
+		ProcessInstance processInstance = session.getSession()
+				.getProcessInstance(processInstanceId);
+		if (processInstance != null) {
+			result = DroolsRun.getFromProcessInstance(processInstance);
+		}
+		if (result == null) {
+			// probably because the workflow has been completed
+			for (DroolsRun run : getBuilds()) {
+				if (run.getProcessInstanceId() == processInstanceId) {
+					return run;
+				}
+			}
+		}
+		return result;
+	}
 
-    public void doProcessImage(StaplerRequest req, StaplerResponse rsp)
-            throws IOException, XPathExpressionException, DocumentException {
-        ServletOutputStream output = rsp.getOutputStream();
-        rsp.setContentType("image/png");
-        getRuleFlowRenderer().write(output);
-        output.flush();
-        output.close();
-    }
+	public <T> T run(SessionCallable<T> callable) throws Exception {
+		return session.run(callable);
+	}
 
-    public void doProcessImageSVG(StaplerRequest req, StaplerResponse rsp)
-            throws IOException, XPathExpressionException, DocumentException {
-        ServletOutputStream output = rsp.getOutputStream();
-        rsp.setContentType("image/svg+xml");
-        getRuleFlowRenderer().writeSVG(output);
-        output.flush();
-        output.close();
-    }
+	public void dispose() {
+		session.dispose();
+		for (DroolsRun run : getBuilds()) {
+			run.dispose();
+		}
+	}
 
-    @Exported
-    public String getProcessXML() {
-        return processXML;
-    }
+	public Script getScript(String scriptName) {
+		try {
+			Class<?> cl = workflowCL.loadClass(scriptName);
+			if (Script.class.isAssignableFrom(cl)) {
+				return (Script) cl.newInstance();
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-    @Exported
-    public String getTriggerSpec() {
-        return triggerSpec;
-    }
+		return DroolsManagement.getInstance().getScript(scriptName);
+	}
 
-    public boolean scheduleBuild() {
-        return scheduleBuild(null, new Action[0]);
-    }
+	public DroolsSession getSession() {
+		return session;
+	}
 
-    public boolean scheduleBuild(Cause c) {
-        return scheduleBuild(c, new Action[0]);
-    }
+	public synchronized void addPendingWorkItemBuild(WorkItemAction action)
+			throws IOException {
+		pendingBuilds.add(action);
+		save();
+	}
 
-    public boolean scheduleBuild(int quietPeriod) {
-        return scheduleBuild(null, new Action[0]);
-    }
-
-    public boolean scheduleBuild(int quietPeriod, Cause c) {
-        return scheduleBuild(null, new CauseAction(c));
-    }
-
-    public CronTabList getTabs() {
-        return tabs;
-    }
-
-    public void doSubmitWorkflow(StaplerRequest request, StaplerResponse rsp)
-            throws IOException {
-        checkPermission(CONFIGURE);
-
-        if (!"POST".equals(request.getMethod())) {
-            rsp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-                    "POST expected");
-            return;
-        }
-
-        String processXML = IOUtils.toString(request.getInputStream());
-        set(triggerSpec, processXML, scripts);
-
-        save();
-    }
-
-    @Override
-    protected void performDelete() throws IOException, InterruptedException {
-        if (session != null)
-            session.dispose();
-        super.performDelete();
-    }
-
-    public List<String> getUsersWithBuildPermission() {
-        List<String> result = new ArrayList<String>();
-
-        AuthorizationMatrixProperty amp = getProperty(AuthorizationMatrixProperty.class);
-        if (amp != null) {
-            for (String sid : amp.getAllSIDs()) {
-                if (amp.hasPermission(sid, Job.BUILD)) {
-                    result.add(sid);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /*
-     * We need two strategies two find the DroolsRun. When the process is
-     * starting, the DroolsRun does not know its processInstanceId yet, so we
-     * query the process variable "run".
-     * 
-     * After the process is completed, the processInstance or variable will be
-     * gone, so we need to iterate over all the builds to find the right one.
-     */
-    public DroolsRun getFromProcessInstance(long processInstanceId) {
-        DroolsRun result = null;
-        ProcessInstance processInstance = session.getSession()
-                .getProcessInstance(processInstanceId);
-        if (processInstance != null) {
-            result = DroolsRun.getFromProcessInstance(processInstance);
-        }
-        if (result == null) {
-            // probably because the workflow has been completed
-            for (DroolsRun run : getBuilds()) {
-                if (run.getProcessInstanceId() == processInstanceId) {
-                    return run;
-                }
-            }
-        }
-        return result;
-    }
-
-    public <T> T run(SessionCallable<T> callable) throws Exception {
-        return session.run(callable);
-    }
-
-    public void dispose() {
-        session.dispose();
-        for (DroolsRun run : getBuilds()) {
-            run.dispose();
-        }
-    }
-
-    public List<Script> getScripts() {
-        return scripts;
-    }
-
-    public void setScripts(List<Script> scripts) {
-        this.scripts = new ArrayList<Script>(scripts);
-    }
-
-    public void setScripts(Script... scripts) {
-        this.scripts = new ArrayList<Script>(Arrays.asList(scripts));
-    }
-
-    public Script getScript(String scriptName) {
-        for (Script script : scripts) {
-            if (script.getId().equals(scriptName)) {
-                return script;
-            }
-        }
-        return DroolsManagement.getInstance().getScript(scriptName);
-    }
-
-    public DroolsSession getSession() {
-        return session;
-    }
-    
-    public void addPendingWorkItemBuild(WorkItemAction action) throws IOException {
-    	pendingBuilds.add(action);
-    	save();
-    }
-    
-    public void removePendingWorkItemBuild(WorkItemAction action) throws IOException {
-    	pendingBuilds.remove(action);
-    	save();
-    }
+	public synchronized void removePendingWorkItemBuild(WorkItemAction action)
+			throws IOException {
+		pendingBuilds.remove(action);
+		save();
+	}
 
 	public List<WorkItemAction> getPendingBuilds() {
 		return pendingBuilds;
 	}
-	
-	public HttpResponse doRescheduleWorkItemBuild(int workItemId) throws IOException {
-		for (WorkItemAction action: pendingBuilds) {
+
+	public HttpResponse doRescheduleWorkItemBuild(int workItemId)
+			throws IOException {
+		for (WorkItemAction action : pendingBuilds) {
 			if (action.getWorkItemId() == workItemId) {
 				action.scheduleBuild();
 				return new ForwardToPreviousPage();
@@ -477,9 +509,10 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		}
 		throw new IOException("Unknown work item id: " + workItemId);
 	}
-	
+
 	public Object readResolve() {
-		if (pendingBuilds == null) pendingBuilds = new ArrayList<WorkItemAction>();
+		if (pendingBuilds == null)
+			pendingBuilds = new ArrayList<WorkItemAction>();
 		return this;
 	}
 
@@ -490,4 +523,15 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	public boolean isConcurrentBuild() {
 		return false;
 	}
+
+	public String getWorkflowId() {
+		return workflowId;
+	}
+	
+	public String getArchiveInfo() throws IOException {
+		return ArchiveManager.getInstance().getInfo(archive);
+	}
+	
+	
+
 }

@@ -1,11 +1,14 @@
 package hudson.drools;
 
-import hudson.model.Hudson;
-import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Job;
 import hudson.model.Run;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 import junit.framework.Assert;
 
@@ -30,9 +33,15 @@ public abstract class DroolsTestCase extends HudsonTestCase {
 			throws IOException {
 		DroolsProject result = hudson.createProject(DroolsProject.class,
 				projectName);
-		String processXML = IOUtils.toString(getClass().getResourceAsStream(
-				resource));
-		result.set(null, processXML, null);
+		File tempFile = File.createTempFile("drools-test-", ".jar");
+		JarOutputStream os = new JarOutputStream(new FileOutputStream(tempFile));
+		os.putNextEntry(new ZipEntry(resource));
+		IOUtils.copy(getClass().getResourceAsStream(
+				resource), os);
+		os.closeEntry();
+		os.close();
+		tempFile.deleteOnExit();
+		result.set(null, tempFile, resource);
 
 		return result;
 

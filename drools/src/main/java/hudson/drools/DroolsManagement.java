@@ -22,7 +22,7 @@ import org.kohsuke.stapler.StaplerResponse;
 @Extension
 public class DroolsManagement extends ManagementLink {
 
-	private List<Script> scripts = new ArrayList<Script>();
+	private List<GroovyScript> scripts = new ArrayList<GroovyScript>();
 
 	public DroolsManagement() {
 		try {
@@ -56,23 +56,23 @@ public class DroolsManagement extends ManagementLink {
 		Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
 
 		JSONObject form = req.getSubmittedForm();
-		setScripts(req.bindJSONToList(Script.class, form.get("scripts")));
+		setScripts(req.bindJSONToList(GroovyScript.class, form.get("scripts")));
 
 		save();
 
 		rsp.forwardToPreviousPage(req);
 	}
 
-	public List<Script> getScripts() {
+	public List<GroovyScript> getScripts() {
 		return scripts;
 	}
 
-	public void setScripts(List<Script> scripts) {
-		this.scripts = new ArrayList<Script>(scripts);
+	public void setScripts(List<GroovyScript> scripts) {
+		this.scripts = new ArrayList<GroovyScript>(scripts);
 	}
 
-	public void setScripts(Script... scripts) {
-		this.scripts = new ArrayList<Script>(Arrays.asList(scripts));
+	public void setScripts(GroovyScript... scripts) {
+		this.scripts = new ArrayList<GroovyScript>(Arrays.asList(scripts));
 	}
 	
 	private File getConfigFile() {
@@ -83,8 +83,8 @@ public class DroolsManagement extends ManagementLink {
 		new XmlFile(getConfigFile()).write(this);
 	}
 
-	public Script getScript(String id) {
-		for (Script script : scripts) {
+	public GroovyScript getScript(String id) {
+		for (GroovyScript script : scripts) {
 			if (id.equals(script.getId())) {
 				return script;
 			}

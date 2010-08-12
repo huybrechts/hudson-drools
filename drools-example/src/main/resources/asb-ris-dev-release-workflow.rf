@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process xmlns="http://drools.org/drools-5.0/process"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+         xs:schemaLocation="http://drools.org/drools-5.0/process drools-processes-5.0.xsd"
+         type="RuleFlow" name="flow" id="asb-ris-dev-release-workflow-1" package-name="asbrisdev1" version="1" >
+
+  <header>
+    <variables>
+      <variable name="agility_ris_release" >
+        <type name="org.drools.process.core.datatype.impl.type.ObjectDataType" className="hudson.drools.RunWrapper" />
+      </variable>
+      <variable name="agility_solution_release" >
+        <type name="org.drools.process.core.datatype.impl.type.ObjectDataType" className="hudson.drools.RunWrapper" />
+      </variable>
+      <variable name="script_step_1" >
+        <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        <value>step1</value>
+      </variable>
+      <variable name="script_step_2" >
+        <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        <value>step2</value>
+      </variable>
+      <variable name="smoke_test_success" >
+        <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+      </variable>
+    </variables>
+  </header>
+
+  <nodes>
+    <workItem id="34" name="asb-ris release smoke-tests connectivity" x="437" y="327" width="228" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release smoke-tests connectivity</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="build" />
+    </workItem>
+    <workItem id="35" name="asb-ris release smoke-tests xmt" x="568" y="269" width="199" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release smoke-tests xmt</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="SOLUTION_BUILD_URL" />
+      <mapping type="out" from="Build" to="xmt_regression_tests" />
+    </workItem>
+    <start id="1" name="Start" x="298" y="10" width="80" height="40" />
+    <workItem id="32" name="Update SFEE Artifacts (1)" x="259" y="209" width="165" height="40" >
+      <work name="Script" >
+        <parameter name="Script" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>CreateSFEERelease3</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="build" />
+      <mapping type="in" from="script_step_1" to="step" />
+    </workItem>
+    <workItem id="2" name="agility-ris-release" x="274" y="73" width="129" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>true</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>agility-ris-release</value>
+        </parameter>
+      </work>
+      <mapping type="out" from="Build" to="agility_ris_release" />
+    </workItem>
+    <workItem id="33" name="asb-ris release regression-tests jemmy" x="659" y="210" width="228" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release regression-tests jemmy</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="SOLUTION_BUILD_URL" />
+    </workItem>
+    <workItem id="3" name="asb-ris release build" x="255" y="141" width="169" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release build</value>
+        </parameter>
+      </work>
+      <mapping type="out" from="Build" to="agility_solution_release" />
+    </workItem>
+    <split id="4" name="Start Tests (Gate 2)" x="262" y="276" width="157" height="40" type="1" />
+    <workItem id="6" name="asb-ris release regression-tests connectivity" x="682" y="328" width="229" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release regression-tests connectivity</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="SOLUTION_BUILD_URL" />
+      <mapping type="out" from="Build" to="connectivity_smoke_tests" />
+    </workItem>
+    <join id="7" name="Tests Complete" x="940" y="270" width="142" height="40" type="1" />
+    <humanTask id="9" name="Manual Smoke Testing" x="250" y="352" width="181" height="40" >
+      <work name="Human Task" >
+        <parameter name="ActorId" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        </parameter>
+        <parameter name="Comment" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        </parameter>
+        <parameter name="Content" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>task(title:"Manual Smoke Testing", private:false){
+ smoke_test_success type:"boolean", description:"Did manual smoke testing pass  ?", defaultValue: false
+}
+</value>
+        </parameter>
+        <parameter name="Priority" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        </parameter>
+        <parameter name="Skippable" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="TaskName" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+        </parameter>
+      </work>
+      <mapping type="out" from="smoke_test_success" to="smoke_test_success" />
+    </humanTask>
+    <split id="10" name="Smoke Tests Success ?" x="262" y="429" width="158" height="40" type="2" >
+      <constraints>
+        <constraint toNodeId="11" toType="DROOLS_DEFAULT" name="no" priority="1" type="code" dialect="java" >return !smoke_test_success;</constraint>
+        <constraint toNodeId="15" toType="DROOLS_DEFAULT" name="yes" priority="1" type="code" dialect="java" >return smoke_test_success;</constraint>
+      </constraints>
+    </split>
+    <end id="11" name="Smoke Test Failure" x="476" y="430" width="165" height="40" />
+    <workItem id="15" name="Update SFEE Artifacts (2)" x="256" y="498" width="167" height="40" >
+      <work name="Script" >
+        <parameter name="Script" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>CreateSFEERelease3</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="build" />
+      <mapping type="in" from="script_step_2" to="step" />
+    </workItem>
+    <end id="16" name="End" x="306" y="835" width="80" height="40" />
+    <workItem id="18" name="asb-ris release smoke-tests jemmy" x="444" y="210" width="194" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+          <value>false</value>
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris release smoke-tests jemmy</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="SOLUTION_BUILD_URL" />
+      <mapping type="out" from="Build" to="jemmy_smoke_tests" />
+    </workItem>
+    <end id="25" name="Results Ignored" x="959" y="342" width="105" height="40" terminate="false" />
+    <workItem id="27" name="asb-ris promotion merge-to-trunk" x="241" y="569" width="202" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ris promotion merge-to-trunk</value>
+        </parameter>
+      </work>
+      <mapping type="in" from="agility_solution_release" to="SOLUTION_BUILD_URL" />
+    </workItem>
+    <split id="26" name="Split" x="305" y="636" width="80" height="40" type="1" />
+    <workItem id="29" name="asb-server promotion merge-from-trunk" x="233" y="705" width="225" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-server promotion merge-from-trunk</value>
+        </parameter>
+      </work>
+    </workItem>
+    <workItem id="28" name="asb-ia promotion merge-from-trunk" x="14" y="704" width="210" height="40" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-ia promotion merge-from-trunk</value>
+        </parameter>
+      </work>
+    </workItem>
+    <join id="31" name="Join" x="306" y="776" width="80" height="40" type="1" />
+    <workItem id="30" name="asb-trunk release workflow" x="466" y="706" width="192" height="40" waitForCompletion="false" >
+      <work name="Build" >
+        <parameter name="Complete when failed" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Complete when unstable" >
+          <type name="org.drools.process.core.datatype.impl.type.BooleanDataType" />
+        </parameter>
+        <parameter name="Project" >
+          <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
+          <value>asb-trunk release workflow</value>
+        </parameter>
+      </work>
+    </workItem>
+  </nodes>
+
+  <connections>
+    <connection from="4" to="34" />
+    <connection from="4" to="35" />
+    <connection from="3" to="32" />
+    <connection from="1" to="2" />
+    <connection from="18" to="33" />
+    <connection from="2" to="3" />
+    <connection from="32" to="4" />
+    <connection from="34" to="6" />
+    <connection from="6" to="7" />
+    <connection from="33" to="7" />
+    <connection from="35" to="7" />
+    <connection from="4" to="9" />
+    <connection from="9" to="10" />
+    <connection from="10" to="11" />
+    <connection from="10" to="15" />
+    <connection from="31" to="16" />
+    <connection from="4" to="18" />
+    <connection from="7" to="25" />
+    <connection from="15" to="27" />
+    <connection from="27" to="26" />
+    <connection from="26" to="29" />
+    <connection from="26" to="28" />
+    <connection from="28" to="31" />
+    <connection from="29" to="31" />
+    <connection from="30" to="31" />
+    <connection from="26" to="30" />
+  </connections>
+
+</process>

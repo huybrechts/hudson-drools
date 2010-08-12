@@ -26,7 +26,7 @@ public class DroolsManagementTest extends HudsonTestCase {
 		form.submit((SubmittableElement) form.getFirstByXPath("//span[@name='Submit']//button"));
 		
 		Assert.assertEquals(1, DroolsManagement.getInstance().getScripts().size());
-		Script script = DroolsManagement.getInstance().getScript("id");
+		GroovyScript script = DroolsManagement.getInstance().getScript("id");
 		Assert.assertNotNull("no script with id 'id'", script);
 		Assert.assertEquals("id", script.getId());
 		Assert.assertEquals("source", script.getSource());
