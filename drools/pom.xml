@@ -26,7 +26,7 @@
 	<artifactId>drools</artifactId>
 	<name>Hudson Drools plugin</name>
 	<url>http://wiki.hudson-ci.org/display/HUDSON/Drools+Plugin</url>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.3-beta-1</version>
 	<packaging>hpi</packaging>
 
 	<dependencies>
@@ -172,6 +172,20 @@
 			</plugin>
 		</plugins>
 	</build>
+
+  <distributionManagement>
+    <repository>
+      <id>hap-repository</id>
+      <name>HAP Maven Repository</name>
+      <url>scp://maven-repository.agfahealthcare.com/maven-repository</url>
+      <uniqueVersion>true</uniqueVersion>
+    </repository>
+    <site>
+      <id>hap-site</id>
+      <name>HAP Maven Site</name>
+      <url>scp://maven-repository.agfahealthcare.com/maven-site</url>
+    </site>
+  </distributionManagement>
 
   <reporting>
     <plugins>
