@@ -6,12 +6,29 @@ import java.util.Map;
 
 import org.drools.runtime.StatefulKnowledgeSession;
 
-public interface Script {
-	
-	public static Map OK = Collections.singletonMap("result", true);
+public abstract class Script {
 
-	public abstract Map execute(StatefulKnowledgeSession session,
-			PrintWriter output, Map<String, Object> parameters)
-			throws Exception;
+	public static final Map<String,Object> OK = Collections.<String,Object>singletonMap("result", true);
+
+	protected StatefulKnowledgeSession session;
+	protected PrintWriter output;
+
+	public StatefulKnowledgeSession getSession() {
+		return session;
+	}
+
+	public void setSession(StatefulKnowledgeSession session) {
+		this.session = session;
+	}
+
+	public PrintWriter getOutput() {
+		return output;
+	}
+
+	public void setOutput(PrintWriter output) {
+		this.output = output;
+	}
+
+	public abstract Map<String, Object> execute() throws Exception;
 
 }

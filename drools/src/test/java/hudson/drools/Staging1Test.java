@@ -33,16 +33,16 @@ public class Staging1Test extends DroolsTestCase {
 
 		deployScriptCalled = false;
 
-		DroolsManagement.getInstance().getScripts().add(
-				new GroovyScript("DeployStagedRelease", "") {
-					@Override
-					public Map execute(StatefulKnowledgeSession session,
-							PrintWriter output, Map<String, Object> parameters)
-							throws Exception {
-						deployScriptCalled = true;
-						return super.execute(session, output, parameters);
-					}
-				});
+//		DroolsManagement.getInstance().getScripts().add(
+//				new GroovyScript("DeployStagedRelease", "") {
+//					@Override
+//					public Map execute(StatefulKnowledgeSession session,
+//							PrintWriter output, Map<String, Object> parameters)
+//							throws Exception {
+//						deployScriptCalled = true;
+//						return super.execute(session, output, parameters);
+//					}
+//				});
 	}
 
 	public void testWorkflowWithTestSuccess() throws Exception {

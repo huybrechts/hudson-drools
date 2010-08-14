@@ -460,23 +460,17 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		}
 	}
 
-	public Script getScript(String scriptName) {
+	public Class<Script> getScript(String scriptName) {
 		try {
 			Class<?> cl = workflowCL.loadClass(scriptName);
 			if (Script.class.isAssignableFrom(cl)) {
-				return (Script) cl.newInstance();
+				return (Class<Script>) cl;
+			} else {
+				throw new IllegalArgumentException("class " + scriptName + " does not extend hudson.drools.Script");
 			}
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new IllegalArgumentException("unknown class " + scriptName);
 		}
-
-		return DroolsManagement.getInstance().getScript(scriptName);
 	}
 
 	public DroolsSession getSession() {

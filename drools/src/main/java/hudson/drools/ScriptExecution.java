@@ -4,6 +4,8 @@ import hudson.model.Job;
 import hudson.security.ACL;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -68,10 +70,7 @@ public class ScriptExecution {
 
 	public void run() {
 		
-		final Script script = run.getParent().getScript(scriptName); 
-		if (script == null) {
-			throw new IllegalArgumentException("Unknown script " + scriptName);
-		}
+		final Class<Script> klazz = run.getParent().getScript(scriptName);
 
 		new Thread(new Runnable() {
 
@@ -79,18 +78,29 @@ public class ScriptExecution {
 				SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 				result = Result.RUNNING;
 
+				PrintWriter output = run.getLogWriter();
 				try {
+					Map<String,Object> parameters = new HashMap<String, Object>(ScriptExecution.this.parameters);
+					parameters.put("parameters", parameters);
+					
+					Script script = ConstructionHelper.newInstance(klazz, parameters);
+					
 					StatefulKnowledgeSession session = run.getParent().getSession().getSession();
-					Map<String, Object> scriptResults = script.execute(session, run
-							.getLogWriter(), parameters);
+					script.setSession(session);
+					script.setOutput(output);
+					
+					output.println("Running script " + scriptName + " with parameters " + ScriptExecution.this.parameters);
+					
+					Map<String, Object> scriptResults = script.execute();
+					
 					result = Result.COMPLETED;
 					
 					run.getParent().run(new CompleteWorkItemCallable(workItemId, scriptResults));
 
 				} catch (Exception e) {
 					result = Result.FAILED;
-					run.getLogWriter().println("Exception while running script " + scriptName);
-					e.printStackTrace(run.getLogWriter());
+					output.println("Exception while running script " + scriptName);
+					e.printStackTrace(output);
 				} finally {
 					try {
 						run.save();

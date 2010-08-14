@@ -1,7 +1,7 @@
 package hudson.drools;
 
-import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.model.FreeStyleProject;
 
 public class RuleFlowRendererTest extends DroolsTestCase {
 
@@ -34,8 +34,8 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 		FreeStyleProject test2 = hudson.createProject(FreeStyleProject.class,
 				"Another Automated Test");
 
-		DroolsManagement.getInstance().getScripts().add(
-				new GroovyScript("DeployStagedRelease", ""));
+//		DroolsManagement.getInstance().getScripts().add(
+//				new GroovyScript("DeployStagedRelease", ""));
 		wf.scheduleBuild(0);
 
 		WebClient wc = new WebClient();
@@ -56,8 +56,8 @@ public class RuleFlowRendererTest extends DroolsTestCase {
 		FreeStyleProject build = hudson.createProject(FreeStyleProject.class,
 				"Build");
 
-		DroolsManagement.getInstance().getScripts().add(
-				new GroovyScript("DeployStagedRelease", ""));
+//		DroolsManagement.getInstance().getScripts().add(
+//				new GroovyScript("DeployStagedRelease", ""));
 
 		WebClient wc = new WebClient();
 		wc.goTo(wf.getUrl() + "/processImage", "image/png");
