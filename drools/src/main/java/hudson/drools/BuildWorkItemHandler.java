@@ -31,7 +31,12 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 	}
 
 	public void executeWorkItem(WorkItem workItem, WorkItemManager manager) {
+		DroolsRun run = project.getFromProcessInstance(workItem.getProcessInstanceId());
 		String projectName = (String) workItem.getParameter(PROJECT);
+		if (projectName == null) {
+			run.getLogWriter().println("Project name not set for workItem " + workItem.getName());
+			return;
+		}
 		Boolean completeWhenFailed = (Boolean) workItem
 				.getParameter(COMPLETE_WHEN_FAILED);
 		Boolean completeWhenUnstable = (Boolean) workItem
@@ -50,9 +55,9 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 						(Boolean) parameter.getValue(), "drools parameter"));
 			}
 			if (parameter.getValue() instanceof RunWrapper) {
-				Run run = ((RunWrapper) parameter.getValue()).getRun();
+				Run r = ((RunWrapper) parameter.getValue()).getRun();
 				values.add(new RunParameterValue(parameter.getKey(),
-						run != null ? run.getExternalizableId() : null, "drools parameter"));
+						r != null ? r.getExternalizableId() : null, "drools parameter"));
 			}
 		}
 
@@ -68,7 +73,6 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 			project.addPendingWorkItemBuild(action);
 			action.scheduleBuild();
 		} catch (Exception e) {
-			DroolsRun run = project.getFromProcessInstance(workItem.getProcessInstanceId());
 			e.printStackTrace(run.getLogWriter());
 		}
 

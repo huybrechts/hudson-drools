@@ -1,7 +1,6 @@
 package hudson.drools;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.drools.renderer.RuleFlowRenderer;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
@@ -21,7 +20,6 @@ import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.model.ParametersAction;
 import hudson.model.Queue.Executable;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
@@ -30,8 +28,8 @@ import hudson.security.AuthorizationMatrixProperty;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,8 +71,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	private transient String processXML;
 	private transient ClassLoader workflowCL;
 	private transient SoftReference<RuleFlowRenderer> renderer;
-
-
+	
 	/**
 	 * All the builds keyed by their build number.
 	 */
@@ -113,11 +110,16 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			}
 		});
 
-		try {
-			set(triggerSpec, archive, workflowId);
-		} catch (Exception e) {
+		if (workflowId != null) {
+			try {
+				set(triggerSpec, archive, workflowId);
+			} catch (Exception e) {
+				disabled = true;
+				e.printStackTrace();
+			}
+		} else {
+			// when loading old (incompatible) data
 			disabled = true;
-			e.printStackTrace();
 		}
 
 	}
@@ -140,8 +142,12 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 				ArchiveManager.getInstance().getClassLoader(archive) :
 				Thread.currentThread().getContextClassLoader();
 
-		String processXML = hudson.util.IOUtils.toString(workflowCL
-				.getResourceAsStream(workflowId));
+		InputStream resource = workflowCL
+				.getResourceAsStream(workflowId);
+		if (resource == null) {
+			throw new IOException("workflow ID unknown");
+		}
+		String processXML = hudson.util.IOUtils.toString(resource);
 
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		Thread.currentThread().setContextClassLoader(
@@ -172,6 +178,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 			this.processXML = processXML;
 			this.workflowCL = workflowCL;
 			this.workflowId = workflowId;
+			this.renderer = null;
 
 			WorkItemManager workItemManager = session.getSession()
 					.getWorkItemManager();
@@ -228,7 +235,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		String workflowId = form.getString("workflowId");
 		String triggerSpec = form.getString("triggerSpec");
 
-		FileItem fileItem = req.getFileItem("file1");
+		FileItem fileItem = req.getFileItem("archive");
 		boolean fileItemUploaded = fileItem != null && fileItem.getSize() > 0;
 		File newArchive = fileItemUploaded ?  ArchiveManager.getInstance().uploadFile(fileItem) : archive;
 
@@ -271,9 +278,16 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		this.disabled = disable;
 	}
 
-	public HttpResponse doEnable() {
+	public HttpResponse doEnable() throws IOException {
 		checkPermission(CONFIGURE);
 		disabled = false;
+		save();
+		return new ForwardToPreviousPage();
+	}
+	public HttpResponse doDisable() throws IOException {
+		checkPermission(CONFIGURE);
+		disabled = true;
+		save();
 		return new ForwardToPreviousPage();
 	}
 

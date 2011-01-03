@@ -1,39 +1,37 @@
 package hudson.drools.renderer;
 
-import hudson.drools.GraphicsUtil;
-import static hudson.drools.renderer.RendererConstants.*;
 import hudson.drools.NodeInstanceLog;
 import hudson.drools.WorkItemAction;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
+import hudson.util.IOUtils;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.GradientPaint;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Paint;
-import java.awt.Polygon;
-import java.awt.RadialGradientPaint;
-import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -42,6 +40,8 @@ import org.dom4j.io.SAXReader;
 
 public class RuleFlowRenderer {
 
+	private static final Pattern BENDPOINT_PATTERN = Pattern.compile("\\[(?:(\\d+),(\\d+))(?:;(\\d+),(\\d+))*\\]");
+	
     private Map<String, RendererNode> nodes = new HashMap<String, RendererNode>();
     private List<Connection> connections = new ArrayList<Connection>();
     private List<Connection> compositeConnections = new ArrayList<Connection>();
@@ -88,8 +88,9 @@ public class RuleFlowRenderer {
     }
 
     static Job getJobUrl(String projectName) {
-        return (Hudson.getInstance() != null) ? (Job) Hudson.getInstance()
-                .getItem(projectName) : null;
+    	if (projectName == null) return null;
+    	if (Hudson.getInstance() == null) return null;
+        return (Job) Hudson.getInstance().getItem(projectName);
     }
 
     private void readResource(Document document) throws DocumentException {
@@ -113,6 +114,21 @@ public class RuleFlowRenderer {
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
         }
+        it = root.element("connections").elementIterator();
+        while (it.hasNext()) {
+            Element el = (Element) it.next();
+            String bendPointsVal = el.attributeValue("bendpoints");
+            if (bendPointsVal != null) {
+            	int[][] bendPoints = parseBendPoints(bendPointsVal, 0, 0);
+            	if (bendPoints != null)
+            	for (int i = 0; i< bendPoints.length; i++) {
+            		minX = Math.min(minX, bendPoints[i][0]);
+            		minY = Math.min(minY, bendPoints[i][1]);
+            		maxX = Math.max(maxX, bendPoints[i][0]);
+            		maxY = Math.max(maxY, bendPoints[i][1]);
+            	}
+            }
+        }
 
         int offsetX = minX - 5;
         int offsetY = minY - 5;
@@ -132,9 +148,36 @@ public class RuleFlowRenderer {
             Element el = (Element) it.next();
             String from = el.attributeValue("from");
             String to = el.attributeValue("to");
-            connections.add(new Connection(nodes.get(from), nodes.get(to)));
+            String bendPointsVal = el.attributeValue("bendpoints");
+            int[][] bendPoints = null;
+            if (bendPointsVal != null) {
+            	bendPoints = parseBendPoints(bendPointsVal, offsetX, offsetY);
+            }
+            connections.add(new Connection(nodes.get(from), nodes.get(to), bendPoints));
         }
     }
+
+	private int[][] parseBendPoints(String bendPointsVal, int offsetX,
+			int offsetY) {
+		Matcher m = BENDPOINT_PATTERN.matcher(bendPointsVal);
+		if (!m.matches()) {
+			throw new IllegalArgumentException("badly formatted bendpoints: " + bendPointsVal);
+		}
+
+		bendPointsVal = bendPointsVal.substring(1, bendPointsVal.length() - 1);
+		String[] ss = bendPointsVal.split("[,;]");
+		int[][] result = new int[ss.length / 2][];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = new int [] { 
+					Integer.parseInt(ss[i*2]) - offsetX,
+					Integer.parseInt(ss[i*2+1]) - offsetY};
+		}
+
+		return result;
+	}
+    
+    
+    
 
     private RendererNode createNode(Element el, int offsetX, int offsetY) {
         String type = el.getName();
@@ -189,8 +232,11 @@ public class RuleFlowRenderer {
                 Element conn = (Element) it.next();
                 String from = node.id + ":2:" + conn.attributeValue("from");
                 String to = node.id + ":2:" + conn.attributeValue("to");
+                String bendPointsVal = el.attributeValue("bendpoints");
+                int[][] bendPoints = parseBendPoints(bendPointsVal, offsetX,
+    					offsetY);
                 compositeConnections.add(new Connection(nodes.get(from), nodes
-                        .get(to)));
+                        .get(to), bendPoints));
             }
         } else {
             node = new RendererNode(type, name, id, x, y, width, height);
@@ -211,9 +257,7 @@ public class RuleFlowRenderer {
         g2.fillRect(0, 0, getWidth(), getHeight());
 
         for (Connection connection : connections) {
-            Rectangle2D.Double fromRect = connection.from.getRectangle();
-            Rectangle2D.Double toRect = connection.to.getRectangle();
-            paintLine(g2, fromRect, toRect);
+            paintConnection(g2, connection);
         }
 
         for (RendererNode node : nodes.values()) {
@@ -222,9 +266,7 @@ public class RuleFlowRenderer {
         }
 
         for (Connection connection : compositeConnections) {
-            Rectangle2D.Double fromRect = connection.from.getRectangle();
-            Rectangle2D.Double toRect = connection.to.getRectangle();
-            paintLine(g2, fromRect, toRect);
+        	paintConnection(g2, connection);
         }
 
         for (RendererNode node : nodes.values()) {
@@ -233,71 +275,28 @@ public class RuleFlowRenderer {
         }
     }
 
-    public static void paintLine(Graphics2D g2, Rectangle2D.Double from,
-            Rectangle2D.Double to) {
-
-        Point2D.Double fromRectCenter = new Point2D.Double(from.getCenterX(),
-                from.getCenterY());
-        Point2D.Double toRectCenter = new Point2D.Double(to.getCenterX(), to
-                .getCenterY());
-        Line2D.Double line = new Line2D.Double(fromRectCenter, toRectCenter);
-
-        Double p1 = new Point2D.Double();
-        GraphicsUtil.getLineRectangleIntersection(from, line, p1);
-        Double p2 = new Point2D.Double();
-        GraphicsUtil.getLineRectangleIntersection(to, line, p2);
-
-        // drawArrow(g2, new Line2D.Double(p1,p2), 1, true);
-        drawArrow(g2, line, 1, true);
-
+	private void paintConnection(Graphics2D g2, Connection connection) {
+		Rectangle2D.Double fromRect = connection.from.getRectangle();
+		Rectangle2D.Double toRect = connection.to.getRectangle();
+		int bendPoints[][] = connection.bendPoints;
+		if (bendPoints == null) {
+			GraphicsUtil.paintLine(g2, point(fromRect), point(toRect));
+		} else {
+			GraphicsUtil.paintLine(g2, point(fromRect), point(bendPoints[0]));
+			
+			for (int i = 0; i < bendPoints.length - 1; i++) {
+				GraphicsUtil.paintLine(g2, point(bendPoints[i]), point(bendPoints[i+1]));
+			}
+			
+			GraphicsUtil.paintLine(g2, point(bendPoints[bendPoints.length - 1]), point(toRect) );
+		}
+	}
+    
+    private Point2D.Double point(int[] xy) {
+    	return new Point2D.Double(xy[0], xy[1]);
     }
-
-    public static void drawArrow(Graphics2D g2d, Line2D.Double line,
-            float stroke, boolean arrow) {
-        int xCenter = (int) line.getX1();
-        int yCenter = (int) line.getY1();
-        double x = line.getX2();
-        double y = line.getY2();
-        double aDir = Math.atan2(xCenter - x, yCenter - y);
-        int i1 = 12 + (int) (stroke * 2);
-        int i2 = 6 + (int) stroke; // make the arrow head the same size
-
-        Line2D.Double base = new Line2D.Double(x + xCor(i1, aDir + .5), y
-                + yCor(i1, aDir + .5), x + xCor(i1, aDir - .5), y
-                + yCor(i1, aDir - .5));
-        Point2D.Double intersect = new Point2D.Double();
-        GraphicsUtil.getLineLineIntersection(line, base, intersect);
-
-        g2d.setPaint(LINE_COLOR);
-        if (arrow) {
-            g2d.draw(new Line2D.Double(xCenter, yCenter, intersect.x,
-                    intersect.y));
-
-            g2d.setStroke(new BasicStroke(1f)); // make the arrow head solid
-            // even if
-            // dash pattern has been specified
-            Polygon tmpPoly = new Polygon();
-            // regardless of the length
-            tmpPoly.addPoint((int) x, (int) y); // arrow tip
-            tmpPoly.addPoint((int) x + xCor(i1, aDir + .5), (int) y
-                    + yCor(i1, aDir + .5));
-            // tmpPoly.addPoint(x + xCor(i2, aDir), y + yCor(i2, aDir));
-            tmpPoly.addPoint((int) x + xCor(i1, aDir - .5), (int) y
-                    + yCor(i1, aDir - .5));
-            tmpPoly.addPoint((int) x, (int) y); // arrow tip
-            g2d.drawPolygon(tmpPoly);
-        } else {
-            g2d.draw(new Line2D.Double(xCenter, yCenter, x, y));
-        }
-        // g2d.setPaint(Color.WHITE);
-    }
-
-    private static int yCor(int len, double dir) {
-        return (int) (len * Math.cos(dir));
-    }
-
-    private static int xCor(int len, double dir) {
-        return (int) (len * Math.sin(dir));
+    private Point2D.Double point(Rectangle2D.Double rect) {
+    	return new Point2D.Double(rect.getCenterX(), rect.getCenterY());
     }
 
     public String getNodeName(String id) {
@@ -320,58 +319,6 @@ public class RuleFlowRenderer {
 
     public int getHeight() {
         return height;
-    }
-
-    public static void paintBall(Graphics2D g2, Color c) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-
-        int diameter = 16;
-
-        // Retains the previous state
-        Paint oldPaint = g2.getPaint();
-
-        // Fills the circle with solid blue color
-        g2.setColor(c);
-        g2.fillOval(0, 0, diameter - 1, diameter - 1);
-
-        // Adds shadows at the top
-        Paint p;
-        p = new GradientPaint(0, 0, new Color(0.0f, 0.0f, 0.0f, 0.4f), 0,
-                diameter, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-        g2.setPaint(p);
-        g2.fillOval(0, 0, diameter - 1, diameter - 1);
-
-        // Adds highlights at the bottom
-        p = new GradientPaint(0, 0, new Color(1.0f, 1.0f, 1.0f, 0.0f), 0,
-                diameter, new Color(1.0f, 1.0f, 1.0f, 0.0f));
-        g2.setPaint(p);
-        g2.fillOval(0, 0, diameter - 1, diameter - 1);
-
-        // Creates dark edges for 3D effect
-        p = new RadialGradientPaint(new Point2D.Double(diameter * .4,
-                diameter * .45), diameter / 2.0f, new float[] { 0.0f, 0.95f },
-                new Color[] {
-                        new Color(c.getRed(), c.getGreen(), c.getBlue(), 127),
-                        new Color(0.0f, 0.0f, 0.0f, 0.0f) });
-        g2.setPaint(p);
-        g2.fillOval(0, 0, diameter - 1, diameter - 1);
-
-        // Adds oval inner highlight at the bottom
-        p = new RadialGradientPaint(new Point2D.Double(diameter / 2.0,
-                diameter * 1.5), diameter / 2.3f, new Point2D.Double(
-                diameter / 2.0, diameter * 1.75 + 6),
-                new float[] { 0.0f, 0.8f }, new Color[] {
-                        new Color(c.getRed(), c.getGreen(), c.getBlue(), 255),
-                        new Color(c.getRed(), c.getGreen(), c.getBlue(), 0) },
-                RadialGradientPaint.CycleMethod.NO_CYCLE,
-                RadialGradientPaint.ColorSpaceType.SRGB, AffineTransform
-                        .getScaleInstance(1.0, 0.5));
-        g2.setPaint(p);
-        g2.fillOval(0, 0, diameter - 1, diameter - 1);
-
-        // Restores the previous state
-        g2.setPaint(oldPaint);
     }
 
     public void writeSVG(ServletOutputStream output) throws IOException {
@@ -430,5 +377,31 @@ public class RuleFlowRenderer {
         output.println("</svg>");
 
     }
+    
+    public static void main(String[] args) throws Exception {
+		URL url = RuleFlowRenderer.class.getResource("/hudson/drools/SimpleProjectTest-1.rf");
+		String xml = IOUtils.toString(url.openStream());
+		final RuleFlowRenderer r = new RuleFlowRenderer(xml);
+		
+		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JPanel panel = new JPanel() {
+			@Override
+			protected void paintComponent(Graphics g) {
+				r.paint((Graphics2D) g);
+			}
+			
+			@Override
+			public Dimension getMinimumSize() {
+				return new Dimension(r.getWidth(), r.getHeight());
+			}
+		};
+		frame.setContentPane(panel);
+		
+		frame.setSize(650, 480);
+		frame.setVisible(true);
+		
+		
+	}
 
 }

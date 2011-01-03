@@ -43,7 +43,7 @@ public class Build extends WorkItem {
 			c = RendererConstants.BUILD_FAILED_COLOR;
 		}
 		g2.translate(x, y);
-		RuleFlowRenderer.paintBall(g2, c);
+		GraphicsUtil.paintBall(g2, c);
 		g2.translate(-x, -y);
 
 		return true;

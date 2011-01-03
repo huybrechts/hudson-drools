@@ -14,7 +14,7 @@
 	<f:entry title="Process Archive">
 		<div name="parameter">
 			${it.archiveInfo}
-			<input name="archive" type="file" jsonAware="true" />
+			<input originalName="archive" name="archive" type="file" jsonAware="true" />
 		</div>
 	</f:entry>
 

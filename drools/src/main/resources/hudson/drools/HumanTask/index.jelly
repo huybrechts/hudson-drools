@@ -5,7 +5,7 @@
 		<tr>
 			<td class="pane-header" colspan="3">${it.displayName}
 				${it.actor!=null?("(assigned to "+it.actor.fullName+")"):""}
-				${it.completed?"(Completed)":""}${it.canceled?"(Canceled)":""}</td>
+				${it.completed?"(Completed by " + it.completedBy + ")":""}${it.canceled?"(Canceled)":""}</td>
 		</tr>
 
 		<j:choose>

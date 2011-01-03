@@ -2,3 +2,6 @@ work
 .classpath
 .settings
 .project
+.idea
+.factorypath
+drools.iml

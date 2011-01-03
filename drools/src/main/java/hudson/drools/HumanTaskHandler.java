@@ -3,7 +3,6 @@ package hudson.drools;
 import groovy.lang.Binding;
 import groovy.lang.GroovyCodeSource;
 import groovy.lang.GroovyShell;
-import hudson.model.Hudson;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -55,7 +54,10 @@ public class HumanTaskHandler implements WorkItemHandler {
 		GroovyShell shell = new GroovyShell(HumanTaskBuilder.class.getClassLoader(), binding);
 		GroovyCodeSource codeSource = new GroovyCodeSource(script, "name", ".");
 		HumanTask question = (HumanTask) shell.evaluate(codeSource);
-
+		
+		if (question == null) {
+			question = new HumanTask("NO QUESTION CONFIGURED !", false);
+		}
 		question.setWorkItemId(workItem.getId());
 		question.setActorId((String) workItem.getParameter(ACTOR_ID));
 		run.addHumanTask(question);

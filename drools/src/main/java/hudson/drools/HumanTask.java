@@ -50,6 +50,7 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 	private List<ParameterValue> answers;
 
 	private boolean privateTask;
+	private String completedBy;
 
 	public boolean isPrivateTask() {
 		return privateTask;
@@ -100,6 +101,7 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 		}
 
 		this.answers = values;
+		this.completedBy = Hudson.getAuthentication().getName();
 
 		status = Status.COMPLETED;
 
@@ -183,6 +185,10 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 
 	public String getActorId() {
 		return actorId;
+	}
+	
+	public String getCompletedBy() {
+		return completedBy;
 	}
 
 	public User getActor() {

@@ -27,7 +27,7 @@
   </nodes>
 
   <connections>
-    <connection from="1" to="2" />
+    <connection from="1" to="2" bendpoints="[6,122;174,112]" />
     <connection from="2" to="3" />
   </connections>
 
