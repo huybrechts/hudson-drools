@@ -13,7 +13,7 @@
       <work name="Script" >
         <parameter name="Script" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>script</value>
+          <value>hudson.drools.DummyScript</value>
         </parameter>
       </work>
     </workItem>

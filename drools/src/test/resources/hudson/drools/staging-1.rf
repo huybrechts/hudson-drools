@@ -37,7 +37,7 @@
       <work name="Script" >
         <parameter name="Script" >
           <type name="org.drools.process.core.datatype.impl.type.StringDataType" />
-          <value>DeployStagedRelease</value>
+          <value>hudson.drools.DummyScript</value>
         </parameter>
       </work>
       <mapping type="in" from="build" to="run" />

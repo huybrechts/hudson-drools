@@ -7,11 +7,12 @@ import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 public class LoadHudsonTest extends HudsonTestCase {
-	
+
 	@Ignore("resources missing")
 	@LocalData
 	public void testLoad() {
-		
+    /*
+
 		Assert.assertNotNull(hudson.getItem("Staging Workflow 1"));
 		Assert.assertFalse(((DroolsProject) hudson.getItem("Staging Workflow 1")).isDisabled());
 
@@ -21,7 +22,7 @@ public class LoadHudsonTest extends HudsonTestCase {
 		Assert.assertNotNull(hudson.getItem("Staging Workflow 3"));
 		Assert.assertFalse(((DroolsProject) hudson.getItem("Staging Workflow 3")).isDisabled());
 		
+	*/
 	}
-	
-	
+
 }

@@ -4,6 +4,7 @@ import junit.framework.Assert;
 
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.junit.Ignore;
 
 public class ScriptTest extends DroolsTestCase {
 
@@ -17,9 +18,6 @@ public class ScriptTest extends DroolsTestCase {
 	}
 
 	public void testScriptExecution() throws Exception {
-		String source = "println \"script executed\"";
-//		DroolsManagement.getInstance().setScripts(new GroovyScript("script", source));
-
 		project.scheduleBuild();
 		waitForWorkflowComplete(project, 1);
 
@@ -31,10 +29,8 @@ public class ScriptTest extends DroolsTestCase {
 				.getScriptExecutions().get(0).getResult());
 	}
 
+    /*
 	public void testScriptExecutionFailed() throws Exception {
-		String source = "throw new Exception()";
-//		DroolsManagement.getInstance().setScripts(new GroovyScript("script", source));
-
 		project.scheduleBuild();
 
 		Thread.sleep(1000);
@@ -67,6 +63,7 @@ public class ScriptTest extends DroolsTestCase {
 				+ scriptExecution.getUrl() + "/run']");
 		Assert.assertNull(anchor);
 	}
+	*/
 
 	public void testScriptParameters() throws Exception {
 		StringBuilder source = new StringBuilder();

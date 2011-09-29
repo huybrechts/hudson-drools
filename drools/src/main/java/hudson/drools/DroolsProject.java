@@ -138,6 +138,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 	void set(String triggerSpec, File archive, String workflowId)
 			throws IOException {
+        if (archive != null && !archive.exists()) {
+            // migration when Hudson root dir was moved
+            archive = new File(Hudson.getInstance().getRootDir(), "drools/" + archive.getName());
+        }
+
 		ClassLoader workflowCL = archive != null ? 
 				ArchiveManager.getInstance().getClassLoader(archive) :
 				Thread.currentThread().getContextClassLoader();
@@ -468,7 +473,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public void dispose() {
-		session.dispose();
+		if (session != null) session.dispose();
 		for (DroolsRun run : getBuilds()) {
 			run.dispose();
 		}
@@ -537,7 +542,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 	
 	public String getArchiveInfo() throws IOException {
-		return ArchiveManager.getInstance().getInfo(archive);
+		return archive != null ? ArchiveManager.getInstance().getInfo(archive) : null;
 	}
 	
 	

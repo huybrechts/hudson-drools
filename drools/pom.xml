@@ -19,14 +19,13 @@
       <groupId>org.jvnet.hudson.plugins</groupId>
       <artifactId>plugin</artifactId>
       <version>1.362</version>
-      <relativePath>../../pom.xml</relativePath>
   </parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>drools</artifactId>
 	<name>Hudson Drools plugin</name>
 	<url>http://wiki.hudson-ci.org/display/HUDSON/Drools+Plugin</url>
-	<version>0.3-beta-2</version>
+	<version>0.3-beta-3-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
 	<dependencies>
@@ -103,6 +102,18 @@
     </dependency>
     <dependency>
         <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>maven-plugin</artifactId>
+        <version>${hudson.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>ui-samples-plugin</artifactId>
+        <version>${hudson.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
         <artifactId>hudson-test-harness</artifactId>
         <version>${hudson.version}</version>
         <scope>test</scope>
@@ -140,6 +151,15 @@
 					<target>1.5</target>
 				</configuration>
 			</plugin>
+<plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+		<version>2.7.2</version>
+        <configuration>
+                <argLine>-Xmx512M</argLine>
+                <redirectTestOutputToFile>true</redirectTestOutputToFile>
+				<forkMode>always</forkMode>
+        </configuration>
+</plugin>
 			<plugin>
 				<groupId>org.jvnet.fix1600</groupId>
 				<artifactId>fix1600</artifactId>
@@ -186,6 +206,24 @@
       <url>scp://maven-repository.agfahealthcare.com/maven-site</url>
     </site>
   </distributionManagement>
+  
+  <profiles>
+	<profile>
+		<id>local</id>
+	<dependencies>
+    <dependency>
+      <groupId>org.jvnet.hudson.dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>1.6.1-hudson-1</version>
+    </dependency>
+	</dependencies>
+	<properties>
+		<hudson.version>1.360-SNAPSHOT</hudson.version>
+	</properties>
+	</profile>
+	</profiles>
+
+		
 
   <reporting>
     <plugins>

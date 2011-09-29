@@ -20,8 +20,6 @@ public class Staging1Test extends DroolsTestCase {
 	private FreeStyleProject build;
 	private FreeStyleProject test;
 
-	private boolean deployScriptCalled;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -31,18 +29,6 @@ public class Staging1Test extends DroolsTestCase {
 		build = hudson.createProject(FreeStyleProject.class, "Build");
 		test = hudson.createProject(FreeStyleProject.class, "Automated Test");
 
-		deployScriptCalled = false;
-
-//		DroolsManagement.getInstance().getScripts().add(
-//				new GroovyScript("DeployStagedRelease", "") {
-//					@Override
-//					public Map execute(StatefulKnowledgeSession session,
-//							PrintWriter output, Map<String, Object> parameters)
-//							throws Exception {
-//						deployScriptCalled = true;
-//						return super.execute(session, output, parameters);
-//					}
-//				});
 	}
 
 	public void testWorkflowWithTestSuccess() throws Exception {
@@ -55,7 +41,7 @@ public class Staging1Test extends DroolsTestCase {
 
 			waitForWorkflowComplete(wf, 1);
 
-			Assert.assertTrue(deployScriptCalled);
+            Assert.assertTrue(wf.getLastBuild().getLog().contains("script executed"));
 
 		} finally {
 			// System.out.println(wf.getLastBuild().getLog());
@@ -73,7 +59,7 @@ public class Staging1Test extends DroolsTestCase {
 		assertBuildResult(build, Result.SUCCESS, 1);
 		assertBuildResult(test, Result.FAILURE, 1);
 
-		Assert.assertFalse(deployScriptCalled);
+        Assert.assertFalse(wf.getLastBuild().getLog().contains("script executed"));
 		Assert.assertFalse(wf.getLastBuild().isCompleted());
 
 		HtmlPage page = new WebClient().goTo(test.getLastBuild().getUrl());
@@ -95,7 +81,7 @@ public class Staging1Test extends DroolsTestCase {
 			assertBuildResult(build, Result.SUCCESS, 1);
 			assertBuildResult(test, Result.FAILURE, 1);
 
-			Assert.assertFalse(deployScriptCalled);
+            Assert.assertFalse(wf.getLastBuild().getLog().contains("script executed"));
 			Assert.assertFalse(wf.getLastBuild().isCompleted());
 
 			// fix build
@@ -108,7 +94,7 @@ public class Staging1Test extends DroolsTestCase {
 
 			assertBuildResult(test, Result.SUCCESS, 2);
 
-			Assert.assertTrue(deployScriptCalled);
+            Assert.assertTrue(wf.getLastBuild().getLog().contains("script executed"));
 
 			Assert.assertTrue(wf.getLastBuild().isCompleted());
 
