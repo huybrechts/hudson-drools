@@ -6,6 +6,7 @@ import groovy.util.BuilderSupport;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.ChoiceParameterDefinition;
 import hudson.model.ParameterDefinition;
+import hudson.model.PasswordParameterDefinition;
 import hudson.model.StringParameterDefinition;
 
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public class HumanTaskBuilder extends BuilderSupport {
 	}
 
 	private final List<String> validTypes = Arrays.asList("boolean", "string",
-			"choice");
+			"choice", "password");
 
 	@Override
 	protected Object createNode(Object name, Map attributes) {
@@ -53,6 +54,9 @@ public class HumanTaskBuilder extends BuilderSupport {
 
 		if ("string".equals(type)) {
 			return new StringParameterDefinition((String) name,
+					(String) attributes.get("defaultValue"), description);
+		} else if ("password".equals(type)) {
+			return new PasswordParameterDefinition((String) name,
 					(String) attributes.get("defaultValue"), description);
 		} else if ("boolean".equals(type)) {
 			Boolean defaultValue = (Boolean) attributes.get("defaultValue");

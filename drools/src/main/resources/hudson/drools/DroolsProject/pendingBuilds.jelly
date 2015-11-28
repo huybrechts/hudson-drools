@@ -1,0 +1,29 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project">
+    <l:layout title="${it.displayName}">
+        <st:include page="sidepanel.jelly"/>
+        <l:main-panel>
+            <h1>${it.pronoun} ${it.displayName} Pending Builds</h1>
+
+            <table>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Process Instance ID</th>
+                    <th>Work Item ID</th>
+                </tr>
+                <j:forEach var="workItem" items="${it.pendingBuilds}">
+                    <tr>
+                        <td>${workItem.projectName}</td>
+                        <td>${workItem.processInstanceId}</td>
+                        <td>${workItem.workItemId}</td>
+                        <td>
+                            <a href="rescheduleWorkItemBuild?workItemId=${workItem.workItemId}">reschedule</a>
+                        </td>
+                    </tr>
+                </j:forEach>
+            </table>
+
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

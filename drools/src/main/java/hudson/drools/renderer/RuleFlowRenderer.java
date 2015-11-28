@@ -6,7 +6,15 @@ import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.util.IOUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 
+import javax.imageio.ImageIO;
+import javax.servlet.ServletOutputStream;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -19,7 +27,6 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,16 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.imageio.ImageIO;
-import javax.servlet.ServletOutputStream;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 
 public class RuleFlowRenderer {
 

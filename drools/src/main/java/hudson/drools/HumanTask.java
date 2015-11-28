@@ -1,11 +1,12 @@
 package hudson.drools;
 
+import hudson.model.ParameterValue;
 import hudson.model.AbstractModelObject;
 import hudson.model.BooleanParameterValue;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
+import hudson.model.PasswordParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.User;
 import hudson.security.ACL;
@@ -84,14 +85,16 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 			} else if (value instanceof BooleanParameterValue) {
 				results.put(value.getName(),
 						((BooleanParameterValue) value).value);
+			} else if (value instanceof PasswordParameterValue) {
+				results.put(value.getName(), ((PasswordParameterValue) value).getValue().getPlainText());
 			}
 		}
-		
+
 		PrintWriter log = run.getLogWriter();
 		log.println("HumanTask " + displayName + " #" + workItemId + " submitted.");
 		log.println("\tUser: " + Hudson.getAuthentication().getName());
 		log.println("\tResults: " + results);
-		
+
 		try {
 			run.getParent().run(
 					new CompleteWorkItemCallable(workItemId, results));
@@ -186,7 +189,7 @@ public class HumanTask extends AbstractModelObject implements AccessControlled {
 	public String getActorId() {
 		return actorId;
 	}
-	
+
 	public String getCompletedBy() {
 		return completedBy;
 	}

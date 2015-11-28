@@ -35,14 +35,13 @@ public class DroolsProjectTest extends DroolsTestCase {
 
 	public void testCreateViaBrowser() throws Exception {
 		HtmlPage createProjectPage = new WebClient().goTo("/newJob");
-		HtmlForm form = (HtmlForm) createProjectPage
-				.getFirstByXPath("//form[@action='createItem']");
-		((HtmlTextInput) form.getInputByName("name")).type("project name");
+		HtmlForm form = createProjectPage.getFirstByXPath("//form[@action='createItem']");
+		form.getInputByName("name").type("project name");
 		((HtmlRadioButtonInput) form.getFirstByXPath("//input[@value='"
 				+ DroolsProject.DescriptorImpl.class.getName() + "']")).click();
 
-		HtmlButton button = (HtmlButton) form.getFirstByXPath("//button");
-		HtmlPage projectPage = (HtmlPage) form.submit(button);
+		HtmlButton button = form.getFirstByXPath("//button");
+		HtmlPage projectPage = button.click();
 
 		DroolsProject project = (DroolsProject) hudson.getItem("project name");
 		Assert.assertNotNull("no project created", project);
@@ -59,7 +58,7 @@ public class DroolsProjectTest extends DroolsTestCase {
 				"staging-1.rf"));
 		form.getTextAreaByName("processXML").setText(processXML);
 
-		form.submit((SubmittableElement) form.getFirstByXPath("//button"));
+		((HtmlButton) form.getFirstByXPath("//button")).click();
 
 		Assert.assertEquals(processXML, project.getProcessXML());
 		Assert.assertEquals(triggerSpec, project.getTriggerSpec());

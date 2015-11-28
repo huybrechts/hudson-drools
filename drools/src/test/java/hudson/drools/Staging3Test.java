@@ -76,10 +76,9 @@ public class Staging3Test extends DroolsTestCase {
 
 			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
 
-			HtmlForm form = page.getFormByName("drools-humanTask-"
-					+ humanTask.getWorkItemId());
-			((HtmlCheckBoxInput) form.getInputByName("value")).setChecked(true);
-			form.submit((HtmlButton) form.getFirstByXPath("//button"));
+			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
+			form.getInputByName("value").setChecked(true);
+			((HtmlButton) form.getFirstByXPath("//button")).click();
 
 			Thread.sleep(500);
 
@@ -113,9 +112,8 @@ public class Staging3Test extends DroolsTestCase {
 
 			HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl());
 
-			HtmlForm form = page.getFormByName("drools-humanTask-"
-					+ humanTask.getWorkItemId());
-			form.submit((HtmlButton) form.getFirstByXPath("//button"));
+			HtmlForm form = page.getFormByName("drools-humanTask-" + humanTask.getWorkItemId());
+			((HtmlButton) form.getFirstByXPath("//button")).click();
 
 			Thread.sleep(500);
 

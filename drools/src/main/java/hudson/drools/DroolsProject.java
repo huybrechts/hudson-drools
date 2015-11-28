@@ -7,6 +7,7 @@ import hudson.model.BuildableItem;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
+import hudson.model.Queue;
 import hudson.model.ResourceList;
 import hudson.model.RunMap;
 import hudson.model.RunMap.Constructor;
@@ -24,7 +25,6 @@ import hudson.model.Queue.Executable;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.scheduler.CronTabList;
-import hudson.security.AuthorizationMatrixProperty;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,13 +36,17 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.Future;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.xpath.XPathExpressionException;
 
+import hudson.security.ACL;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
+import org.acegisecurity.Authentication;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -51,6 +55,7 @@ import org.drools.logger.KnowledgeRuntimeLoggerFactory;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkItemManager;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
@@ -71,7 +76,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	private transient String processXML;
 	private transient ClassLoader workflowCL;
 	private transient SoftReference<RuleFlowRenderer> renderer;
-	
+
 	/**
 	 * All the builds keyed by their build number.
 	 */
@@ -105,7 +110,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		this.builds.load(this, new Constructor<DroolsRun>() {
 			public DroolsRun create(File dir) throws IOException {
 				DroolsRun newBuild = new DroolsRun(DroolsProject.this, dir);
-				builds.put(newBuild);
+				builds.put(newBuild.getNumber(), newBuild);
 				return newBuild;
 			}
 		});
@@ -131,37 +136,32 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		}
 		return max;
 	}
-	
+
 	public void testSetWorkflow(String workflowId) throws IOException {
 		set(null, null, workflowId);
 	}
 
 	void set(String triggerSpec, File archive, String workflowId)
 			throws IOException {
-        if (archive != null && !archive.exists()) {
-            // migration when Hudson root dir was moved
-            archive = new File(Hudson.getInstance().getRootDir(), "drools/" + archive.getName());
-        }
-
-		ClassLoader workflowCL = archive != null ? 
+		ClassLoader workflowCL = archive != null ?
 				ArchiveManager.getInstance().getClassLoader(archive) :
 				Thread.currentThread().getContextClassLoader();
 
-		InputStream resource = workflowCL
-				.getResourceAsStream(workflowId);
+		InputStream resource = workflowCL.getResourceAsStream(workflowId);
+
 		if (resource == null) {
 			throw new IOException("workflow ID unknown");
 		}
+
 		String processXML = hudson.util.IOUtils.toString(resource);
 
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Thread.currentThread().setContextClassLoader(
-				PluginImpl.class.getClassLoader());
+		Thread.currentThread().setContextClassLoader(PluginImpl.class.getClassLoader());
+
 		try {
 			int initialId = getMaxProcessInstanceId() + 1;
-			DroolsSession session = workflowId != null ? new DroolsSession(
-					new File(getRootDir(), "session.ser"), processXML,
-					initialId) : null;
+			DroolsSession session = new DroolsSession(new File(getRootDir(), "session.ser"), processXML,
+					initialId);
 
 			CronTabList tabs = null;
 			if (!StringUtils.isEmpty(triggerSpec)) {
@@ -216,6 +216,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		@Override
 		public DroolsProject newInstance(String name) {
 			return new DroolsProject(Hudson.getInstance(), name);
+		}
+
+		@Override
+		public hudson.model.TopLevelItem newInstance(hudson.model.ItemGroup itemGroup, String name) {
+			return new hudson.drools.DroolsProject(itemGroup, name);
 		}
 
 	}
@@ -399,7 +404,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
             return (Future)i.getFuture();
         return null;
     }
-	
+
 	public CronTabList getTabs() {
 		return tabs;
 	}
@@ -427,26 +432,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		super.performDelete();
 	}
 
-	public List<String> getUsersWithBuildPermission() {
-		List<String> result = new ArrayList<String>();
-
-		AuthorizationMatrixProperty amp = getProperty(AuthorizationMatrixProperty.class);
-		if (amp != null) {
-			for (String sid : amp.getAllSIDs()) {
-				if (amp.hasPermission(sid, Job.BUILD)) {
-					result.add(sid);
-				}
-			}
-		}
-
-		return result;
-	}
-
 	/*
 	 * We need two strategies two find the DroolsRun. When the process is
 	 * starting, the DroolsRun does not know its processInstanceId yet, so we
 	 * query the process variable "run".
-	 * 
+	 *
 	 * After the process is completed, the processInstance or variable will be
 	 * gone, so we need to iterate over all the builds to find the right one.
 	 */
@@ -512,10 +502,11 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		return pendingBuilds;
 	}
 
-	public HttpResponse doRescheduleWorkItemBuild(int workItemId)
+	public HttpResponse doRescheduleWorkItemBuild(@QueryParameter(required=true) String workItemId)
 			throws IOException {
+        long id = Long.parseLong(workItemId);
 		for (WorkItemAction action : pendingBuilds) {
-			if (action.getWorkItemId() == workItemId) {
+			if (action.getWorkItemId() == id) {
 				action.scheduleBuild();
 				return new ForwardToPreviousPage();
 			}
@@ -526,6 +517,16 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	public Object readResolve() {
 		if (pendingBuilds == null)
 			pendingBuilds = new ArrayList<WorkItemAction>();
+		
+		if (archive != null) {
+			File home = Jenkins.getInstance().getRootDir();
+			if (!archive.toPath().startsWith(home.toPath())) {
+				String p = archive.getAbsolutePath();
+				p = p.substring(1 + p.indexOf(File.separatorChar + "drools" + File.separatorChar));
+				archive = new File(home, p);
+			}
+		}
+		
 		return this;
 	}
 
@@ -537,14 +538,36 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		return false;
 	}
 
+	public java.util.Collection<? extends hudson.model.queue.SubTask> getSubTasks() {
+		return java.util.Collections.singleton(this);
+	}
+
+	@Nonnull
+	public Authentication getDefaultAuthentication() {
+		return ACL.SYSTEM;
+	}
+
+	@Nonnull
+	public Authentication getDefaultAuthentication(Queue.Item item) {
+		return getDefaultAuthentication();
+	}
+
+	public hudson.model.Queue.Task getOwnerTask() {
+		return this;
+	}
+
+	public Object getSameNodeConstraint() {
+		return null;
+	}
+
 	public String getWorkflowId() {
 		return workflowId;
 	}
-	
+
 	public String getArchiveInfo() throws IOException {
 		return archive != null ? ArchiveManager.getInstance().getInfo(archive) : null;
 	}
-	
-	
+
+
 
 }

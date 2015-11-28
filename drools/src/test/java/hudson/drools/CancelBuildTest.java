@@ -1,5 +1,6 @@
 package hudson.drools;
 
+import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import junit.framework.Assert;
 
 import org.jvnet.hudson.test.FailureBuilder;
@@ -30,8 +31,8 @@ public class CancelBuildTest extends DroolsTestCase {
 		Assert.assertTrue(wf.getLastBuild().isRunning());
 		
 		HtmlPage page = new WebClient().goTo(wf.getLastBuild().getUrl() + "/cancel");
-		HtmlForm form = (HtmlForm) page.getFirstByXPath("//form[@action='doCancel']");
-		form.submit((SubmittableElement) form.getFirstByXPath("//button"));
+		HtmlForm form = page.getFirstByXPath("//form[@action='doCancel']");
+		((HtmlButton) form.getFirstByXPath("//button")).click();
 		
 		Assert.assertTrue(wf.getLastBuild().isAborted());
 		

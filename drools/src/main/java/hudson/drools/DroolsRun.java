@@ -24,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.xml.xpath.XPathExpressionException;
 
+import jenkins.model.lazy.LazyBuildMixIn;
 import org.dom4j.DocumentException;
 import org.drools.runtime.process.ProcessInstance;
 import org.drools.runtime.process.WorkflowProcessInstance;
@@ -47,6 +48,10 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	private long processInstanceId;
 
 	private String processXML;
+
+	protected DroolsRun _this() {
+		return this;
+	}
 
 	private Object readResolve() {
 		for (HumanTask task : humanTasks) {
@@ -306,4 +311,13 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 			logWriter.close();
 	}
 
+	@Override
+	public DroolsRun getPreviousBuild() {
+		return getParent().getNearestOldBuild(number - 1);
+	}
+
+	@Override
+	public DroolsRun getNextBuild() {
+		return getParent().getNearestBuild(number + 1);
+	}
 }

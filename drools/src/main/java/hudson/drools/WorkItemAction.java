@@ -39,7 +39,7 @@ public class WorkItemAction extends ParametersAction {
 
 	private final String droolsProjectName;
 
-	private boolean completed = false;
+    private boolean completed = false;
 
 	public WorkItemAction(String droolsProjectName, long workItemId,
 			long processInstanceId, String projectName,
@@ -237,4 +237,9 @@ public class WorkItemAction extends ParametersAction {
 	public boolean shouldSchedule(List<Action> actions) {
 		return true;
 	}
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
 }

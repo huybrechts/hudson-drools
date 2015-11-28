@@ -116,6 +116,6 @@ public abstract class DroolsTestCase extends HudsonTestCase {
 	
 	public HtmlPage submitForm(HtmlForm form) throws IOException {
 		HtmlButton button = (HtmlButton) form.getFirstByXPath("//button");
-		return (HtmlPage) form.submit(button);
+		return (HtmlPage) button.click();
 	}
 }
