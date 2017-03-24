@@ -2,25 +2,10 @@ package hudson.drools;
 
 import hudson.Extension;
 import hudson.drools.renderer.RuleFlowRenderer;
-import hudson.model.Action;
-import hudson.model.BuildableItem;
+import hudson.model.*;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Item;
-import hudson.model.ItemGroup;
-import hudson.model.Queue;
-import hudson.model.ResourceList;
-import hudson.model.RunMap;
 import hudson.model.RunMap.Constructor;
-import hudson.model.TopLevelItem;
-import hudson.model.TopLevelItemDescriptor;
-import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.Cause.UserCause;
-import hudson.model.CauseAction;
-import hudson.model.Hudson;
-import hudson.model.Job;
-import hudson.model.Label;
-import hudson.model.Node;
 import hudson.model.Queue.Executable;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
@@ -80,7 +65,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	/**
 	 * All the builds keyed by their build number.
 	 */
-	protected transient/* almost final */RunMap<DroolsRun> builds = new RunMap<DroolsRun>();
+	protected transient/* almost final */RunMap<DroolsRun> builds = new RunMap<>();
 
 	protected DroolsProject(ItemGroup<?> parent, String name) {
 		super(parent, name);
@@ -102,13 +87,12 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	@Override
-	public void onLoad(ItemGroup<? extends Item> parent, String name)
-			throws IOException {
+	public void onLoad(ItemGroup<? extends Item> parent, String name) throws IOException {
 		super.onLoad(parent, name);
 
-		this.builds = new RunMap<DroolsRun>();
-		this.builds.load(this, new Constructor<DroolsRun>() {
-			public DroolsRun create(File dir) throws IOException {
+		this.builds = new RunMap<>(getBuildDir(), new Constructor() {
+			@Override
+			public Run create(File dir) throws IOException {
 				DroolsRun newBuild = new DroolsRun(DroolsProject.this, dir);
 				builds.put(newBuild.getNumber(), newBuild);
 				return newBuild;
@@ -122,9 +106,6 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 				disabled = true;
 				e.printStackTrace();
 			}
-		} else {
-			// when loading old (incompatible) data
-			disabled = true;
 		}
 
 	}
@@ -141,8 +122,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 		set(null, null, workflowId);
 	}
 
-	void set(String triggerSpec, File archive, String workflowId)
-			throws IOException {
+	void set(String triggerSpec, File archive, String workflowId) throws IOException {
 		ClassLoader workflowCL = archive != null ?
 				ArchiveManager.getInstance().getClassLoader(archive) :
 				Thread.currentThread().getContextClassLoader();
@@ -160,8 +140,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 		try {
 			int initialId = getMaxProcessInstanceId() + 1;
-			DroolsSession session = new DroolsSession(new File(getRootDir(), "session.ser"), processXML,
-					initialId);
+			DroolsSession session = new DroolsSession(new File(getRootDir(), "session.ser"), processXML, initialId);
 
 			CronTabList tabs = null;
 			if (!StringUtils.isEmpty(triggerSpec)) {
@@ -226,13 +205,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 	}
 
 	public DescriptorImpl getDescriptor() {
-		return (DescriptorImpl) Hudson.getInstance().getDescriptor(
-				DroolsProject.class);
-	}
-
-	@Override
-	public Hudson getParent() {
-		return Hudson.getInstance();
+		return (DescriptorImpl) Hudson.getInstance().getDescriptor(DroolsProject.class);
 	}
 
 	@Override
@@ -345,8 +318,7 @@ public class DroolsProject extends Job<DroolsProject, DroolsRun> implements
 
 	public synchronized RuleFlowRenderer getRuleFlowRenderer() {
 		if (renderer == null || renderer.get() == null) {
-			renderer = new SoftReference<RuleFlowRenderer>(
-					new RuleFlowRenderer(processXML));
+			renderer = new SoftReference<>(new RuleFlowRenderer(getParent(), processXML));
 		}
 		return renderer.get();
 	}

@@ -12,7 +12,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class Staging1Test extends DroolsTestCase {
 

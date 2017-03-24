@@ -27,7 +27,7 @@ public class RunWrapper implements Externalizable {
 	public RunWrapper(Run<?, ?> run) {
 		super();
 		this.run = run;
-        jobName = run.getParent().getName();
+        jobName = run.getParent().getFullName();
         buildNumber = run.getNumber();
 	}
 
@@ -115,7 +115,7 @@ public class RunWrapper implements Externalizable {
 		Hudson hudson = Hudson.getInstance();
 		if (hudson == null)
 			return null; // in simple unit test
-		Job<?, ?> job = (Job<?, ?>) hudson.getItemMap().get(jobName);
+		Job<?, ?> job = (Job<?, ?>) hudson.getItemByFullName(jobName);
 		if (job == null)
 			return null;
 		Run<?, ?> run = job.getBuildByNumber(buildNumber);

@@ -21,7 +21,7 @@ public class SignalEventCallable implements SessionCallable<Void> {
 		session.signalEvent(
 			String.format(
 					Constants.BUILD_COMPLETE_EVENT, 
-					run.getParent().getName()
+					run.getParent().getFullName()
 			), 
 			new RunWrapper(run));
 		return null;

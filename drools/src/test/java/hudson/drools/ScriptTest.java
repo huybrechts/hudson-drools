@@ -1,6 +1,6 @@
 package hudson.drools;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;

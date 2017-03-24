@@ -1,8 +1,8 @@
 package hudson.drools;
 
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import junit.framework.Assert;
 
+import org.junit.Assert;
 import org.jvnet.hudson.test.FailureBuilder;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;

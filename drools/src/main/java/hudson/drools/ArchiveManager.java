@@ -51,7 +51,7 @@ public class ArchiveManager {
 		WeakReference<ClassLoader> result = classloaders.get(f);
 		if (result == null || result.get() == null) {
 			result = new WeakReference<ClassLoader>(new URLClassLoader(new URL[] { f.toURI().toURL() }, Hudson
-					.getInstance().getPluginManager().uberClassLoader));
+					.getActiveInstance().getPluginManager().uberClassLoader));
 			classloaders.put(f, result);
 		}
 		return result.get();

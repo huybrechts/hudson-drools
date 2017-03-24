@@ -63,7 +63,7 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 
 		try {
 			WorkItemAction action = new WorkItemAction(
-					project.getName(),
+					project.getFullName(),
 					workItem.getId(),
 					workItem.getProcessInstanceId(),
 					projectName,

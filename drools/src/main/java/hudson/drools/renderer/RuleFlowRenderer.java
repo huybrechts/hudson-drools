@@ -3,9 +3,11 @@ package hudson.drools.renderer;
 import hudson.drools.NodeInstanceLog;
 import hudson.drools.WorkItemAction;
 import hudson.model.Hudson;
+import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.util.IOUtils;
+import jenkins.model.Jenkins;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -43,11 +45,14 @@ public class RuleFlowRenderer {
     private List<Connection> connections = new ArrayList<Connection>();
     private List<Connection> compositeConnections = new ArrayList<Connection>();
 
+    private ItemGroup context;
+
     private int width, height;
 
     // private List<NodeInstanceLog> logs;
 
-    public RuleFlowRenderer(String xml) {
+    public RuleFlowRenderer(ItemGroup context, String xml) {
+        this.context = context;
         try {
             readResource(new SAXReader().read(new StringReader(xml)));
         } catch (DocumentException e) {
@@ -55,8 +60,8 @@ public class RuleFlowRenderer {
         }
     }
 
-    public RuleFlowRenderer(String xml, List<NodeInstanceLog> logs) {
-        this(xml);
+    public RuleFlowRenderer(ItemGroup context, String xml, List<NodeInstanceLog> logs) {
+        this(context, xml);
         // this.logs = logs;
 
         for (NodeInstanceLog log : logs) {
@@ -72,10 +77,9 @@ public class RuleFlowRenderer {
             }
             if (node instanceof Build) {
                 String projectName = ((Build) node).project;
-                Job project = getJobUrl(projectName);
+                Job project = getJob(projectName);
                 if (project != null) {
-                    Run run = WorkItemAction.findRun(project, log
-                            .getProcessInstanceId());
+                    Run run = WorkItemAction.findRun(project, log.getProcessInstanceId());
                     if (run != null) {
                         ((Build) node).run = run;
                     }
@@ -84,10 +88,9 @@ public class RuleFlowRenderer {
         }
     }
 
-    static Job getJobUrl(String projectName) {
-    	if (projectName == null) return null;
-    	if (Hudson.getInstance() == null) return null;
-        return (Job) Hudson.getInstance().getItem(projectName);
+    Job getJob(String projectName) {
+    	if (projectName == null || context == null || Hudson.getInstance() == null) return null;
+        return (Job) Jenkins.getActiveInstance().getItem(projectName, context);
     }
 
     private void readResource(Document document) throws DocumentException {
@@ -200,7 +203,7 @@ public class RuleFlowRenderer {
                         project = param.elementText("value");
                     }
                 }
-                node = new Build(type, name, id, project, x, y, width, height);
+                node = new Build(context, type, name, id, project, x, y, width, height);
             } else {
                 node = new WorkItem(type, name, id, x, y, width, height);
             }
@@ -378,7 +381,7 @@ public class RuleFlowRenderer {
     public static void main(String[] args) throws Exception {
 		URL url = RuleFlowRenderer.class.getResource("/hudson/drools/SimpleProjectTest-1.rf");
 		String xml = IOUtils.toString(url.openStream());
-		final RuleFlowRenderer r = new RuleFlowRenderer(xml);
+		final RuleFlowRenderer r = new RuleFlowRenderer(null, xml);
 		
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

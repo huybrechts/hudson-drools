@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.HttpResponse;
 
 public class WorkItemAction extends ParametersAction {
@@ -67,10 +68,10 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public void scheduleBuild() {
-		Job project = (Job) Hudson.getInstance().getItem(projectName);
+		DroolsProject droolsProject = Jenkins.getActiveInstance().getItemByFullName(droolsProjectName, DroolsProject.class);
+		Job project = Jenkins.getActiveInstance().getItem(projectName, droolsProject, Job.class);
 		if (project == null) {
-			throw new IllegalArgumentException("project " + projectName
-					+ " does not exist (work item " + workItemId + ")");
+			throw new IllegalArgumentException("project " + projectName + " does not exist (work item " + workItemId + ")");
 		}
 		if (project instanceof AbstractProject) {
 			((AbstractProject) project).scheduleBuild(0, new DroolsCause("Started by workflow"), this);
@@ -86,7 +87,7 @@ public class WorkItemAction extends ParametersAction {
 		save();
 		
 		try {
-			DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
+			DroolsProject p = (DroolsProject) Jenkins.getActiveInstance().getItemByFullName(
 					droolsProjectName);
 			p.removePendingWorkItemBuild(this);
 		} catch (IOException e) {
@@ -109,8 +110,7 @@ public class WorkItemAction extends ParametersAction {
 
 	private void complete() {
 
-		DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
-				droolsProjectName);
+		DroolsProject p = (DroolsProject) Hudson.getInstance().getItemByFullName(droolsProjectName);
 
 		try {
 			p.run(new CompleteWorkItemCallable(workItemId, run));
@@ -214,8 +214,7 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	public DroolsRun getDroolsRun() {
-		DroolsProject p = (DroolsProject) Hudson.getInstance().getItem(
-				droolsProjectName);
+		DroolsProject p = Jenkins.getActiveInstance().getItemByFullName(droolsProjectName, DroolsProject.class);
 
 		return p != null ? p.getFromProcessInstance(processInstanceId) : null;
 	}

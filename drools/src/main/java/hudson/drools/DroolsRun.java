@@ -175,7 +175,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 	}
 
 	public synchronized RuleFlowRenderer getRuleFlowRenderer() {
-		return new RuleFlowRenderer(processXML, getLogs());
+		return new RuleFlowRenderer(getParent().getParent(), processXML, getLogs());
 	}
 
 	public void doProcessInstanceImage(StaplerRequest req, StaplerResponse rsp)

@@ -6,7 +6,7 @@ import hudson.model.Result;
 import java.io.PrintWriter;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.drools.runtime.StatefulKnowledgeSession;
 import org.jvnet.hudson.test.FailureBuilder;

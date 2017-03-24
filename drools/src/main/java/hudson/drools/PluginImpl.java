@@ -13,10 +13,10 @@ public class PluginImpl extends Plugin {
 
 	@Override
 	public void stop() throws Exception {
-		for (DroolsProject project : Hudson.getInstance().getItems(
-				DroolsProject.class)) {
-			project.dispose();
-		}
+//		for (DroolsProject project : Hudson.getInstance().getItems(
+//				DroolsProject.class)) {
+//			project.dispose();
+//		}
 	}
 
 	/**

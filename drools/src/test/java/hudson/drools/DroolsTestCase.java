@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
-import junit.framework.Assert;
+import jenkins.model.Jenkins;
+import org.junit.Assert;
 
 import org.apache.commons.io.IOUtils;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -29,10 +30,9 @@ public abstract class DroolsTestCase extends HudsonTestCase {
 		new PluginImpl().start();
 	}
 
-	public DroolsProject createProject(String projectName, String resource)
-			throws IOException {
-		DroolsProject result = hudson.createProject(DroolsProject.class,
-				projectName);
+	public DroolsProject createProject(String projectName, String resource) throws IOException {
+		DroolsProject result = hudson.createProject(DroolsProject.class, projectName);
+		result.onLoad(Jenkins.getActiveInstance(), projectName);
 		File tempFile = File.createTempFile("drools-test-", ".jar");
 		JarOutputStream os = new JarOutputStream(new FileOutputStream(tempFile));
 		os.putNextEntry(new ZipEntry(resource));

@@ -3,9 +3,11 @@
  */
 package hudson.drools.renderer;
 
+import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
+import jenkins.model.Jenkins;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -13,12 +15,14 @@ import java.awt.Image;
 
 public class Build extends WorkItem {
 
+	private final ItemGroup context;
 	public String project;
 	Run run;
 
-	public Build(String type, String name, String id, String project,
-			int x, int y, int width, int height) {
+	public Build(ItemGroup context, String type, String name, String id, String project,
+				 int x, int y, int width, int height) {
 		super(type, name, id, x, y, width, height);
+		this.context = context;
 		this.project = project;
 	}
 
@@ -56,7 +60,7 @@ public class Build extends WorkItem {
 		}
 		
 		if (project != null) {
-			Job job = RuleFlowRenderer.getJobUrl(project);
+			Job job = Jenkins.getActiveInstance().getItem(project, context, Job.class);
 			if (job != null) {
 				return job.getUrl();
 			}
