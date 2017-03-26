@@ -57,6 +57,7 @@ public class DroolsRun extends Run<DroolsProject, DroolsRun> implements
 		for (HumanTask task : humanTasks) {
 			task.setRun(this);
 		}
+		processXML = processXML.intern();
 		return this;
 	}
 
