@@ -229,7 +229,4 @@
         </plugins>
     </reporting>
 
-  <scm>
-    <tag>drools-0.5</tag>
-  </scm>
 </project>
