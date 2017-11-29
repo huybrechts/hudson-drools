@@ -228,5 +228,9 @@
             </plugin>
         </plugins>
     </reporting>
+    
+    <scm>
+        <connection>scm:git:https://github.com/huybrechts/hudson-drools.git>/connection>
+    </scm>
 
 </project>
