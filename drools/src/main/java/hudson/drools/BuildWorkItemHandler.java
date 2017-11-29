@@ -34,8 +34,7 @@ public class BuildWorkItemHandler implements WorkItemHandler {
 		DroolsRun run = project.getFromProcessInstance(workItem.getProcessInstanceId());
 		String projectName = (String) workItem.getParameter(PROJECT);
 		if (projectName == null) {
-			run.getLogWriter().println("Project name not set for workItem " + workItem.getName());
-			return;
+			projectName = workItem.getName();
 		}
 		Boolean completeWhenFailed = (Boolean) workItem
 				.getParameter(COMPLETE_WHEN_FAILED);

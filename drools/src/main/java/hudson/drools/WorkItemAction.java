@@ -109,8 +109,7 @@ public class WorkItemAction extends ParametersAction {
 	}
 
 	private void complete() {
-
-		DroolsProject p = (DroolsProject) Hudson.getInstance().getItemByFullName(droolsProjectName);
+		DroolsProject p = (DroolsProject) Jenkins.getActiveInstance().getItemByFullName(droolsProjectName);
 
 		try {
 			p.run(new CompleteWorkItemCallable(workItemId, run));
