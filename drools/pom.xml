@@ -231,6 +231,7 @@
     
     <scm>
         <connection>scm:git:https://github.com/huybrechts/hudson-drools.git</connection>
+        <developerConnection>scm:git:https://github.com/huybrechts/hudson-drools.git</developerConnection>
     </scm>
 
 </project>
